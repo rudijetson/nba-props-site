@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NBA Props - 2026-01-05</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 12px;
+      line-height: 1.4;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .title-section {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    h1 { font-size: 16px; font-weight: 600; }
+    .subtitle { color: #64748b; font-size: 12px; }
+
+    .search-box {
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 12px;
+      width: 160px;
+      background: white;
+    }
+    .search-box:focus { outline: none; border-color: #3b82f6; }
+
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .stat-item { display: flex; align-items: baseline; gap: 6px; }
+    .stat-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
+    .stat-value { font-size: 14px; font-weight: 600; }
+    .stat-value.positive { color: #059669; }
+    .stat-value.negative { color: #dc2626; }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-group {
+      display: flex;
+      gap: 2px;
+      background: white;
+      padding: 2px;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .filter-btn {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      color: #64748b;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { background: #f1f5f9; color: #334155; }
+    .filter-btn.active { background: #3b82f6; color: white; }
+
+    .count { font-size: 11px; color: #94a3b8; margin-bottom: 6px; }
+
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      overflow: auto;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 14px; text-align: left; }
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 3;
+    }
+    th:hover { background: #f1f5f9; }
+    th.sorted-asc::after { content: ' ▲'; font-size: 10px; }
+    th.sorted-desc::after { content: ' ▼'; font-size: 10px; }
+    tr { border-bottom: 1px solid #f1f5f9; }
+    tr:hover { background: #f8fafc; }
+    tr:last-child { border-bottom: none; }
+
+    td:first-child {
+      position: sticky;
+      left: 0;
+      background: white;
+      z-index: 1;
+    }
+    tr:hover td:first-child {
+      background: #f8fafc;
+    }
+
+    .player-name { font-weight: 500; }
+    .team { color: #94a3b8; font-size: 11px; margin-left: 6px; }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .pill.over { background: #dcfce7; color: #166534; }
+    .pill.under { background: #fef3c7; color: #92400e; }
+
+    .edge { font-weight: 600; }
+    .edge.low { color: #cbd5e1; }     /* 📉 <10% - light gray */
+    .edge.okay { color: #64748b; }    /* 🧊 10-15% - gray/blue */
+    .edge.best { color: #059669; }    /* ⭐ 15-20% - green */
+    .edge.good { color: #f59e0b; }    /* 🔥 20-25% - amber */
+    .edge.caution { color: #dc2626; } /* ⚠️ 25%+ - red */
+
+    .result { font-weight: 600; }
+    .result.win { color: #059669; }
+    .result.loss { color: #dc2626; }
+    .result.void { color: #94a3b8; }
+    .result.pending { color: #3b82f6; }
+
+    .actual.hit { color: #059669; }
+    .actual.miss { color: #dc2626; }
+
+    .no-data { text-align: center; padding: 40px; color: #94a3b8; }
+
+    .detail-col.hidden { display: none; }
+    .wager-btn {
+      padding: 4px 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      background: white;
+      font-size: 11px;
+      cursor: pointer;
+      min-width: 36px;
+      color: #64748b;
+    }
+    .wager-btn:hover { border-color: #3b82f6; }
+    .wager-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+    .parlay-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+    .parlay-bar.visible {
+      transform: translateY(0);
+    }
+    body.has-parlay {
+      padding-bottom: 60px;
+    }
+    .parlay-bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .parlay-bar-header:hover { background: #f8fafc; }
+    .parlay-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 20px;
+    }
+    .parlay-details.expanded {
+      max-height: 300px;
+      padding: 12px 20px;
+    }
+    .parlay-leg {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 12px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .parlay-leg:last-child { border-bottom: none; }
+    .parlay-leg .remove { cursor: pointer; color: #dc2626; font-size: 16px; padding: 0 4px; }
+    .parlay-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 8px 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .parlay-tab {
+      padding: 6px 12px;
+      font-size: 11px;
+      border: none;
+      background: #f1f5f9;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      color: #64748b;
+    }
+    .parlay-tab:hover { background: #e2e8f0; }
+    .parlay-tab.active { background: white; color: #1e293b; font-weight: 500; }
+    .parlay-tab.add { background: transparent; color: #3b82f6; }
+    .parlay-tab.add:hover { background: #dbeafe; }
+
+    .add-parlay {
+      padding: 2px 6px;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .add-parlay:hover { border-color: #3b82f6; color: #3b82f6; }
+    .add-parlay.in-parlay { background: #dbeafe; border-color: #3b82f6; color: #3b82f6; }
+
+    @media (max-width: 768px) {
+      body { padding: 8px; }
+      .top-bar { gap: 8px; }
+      .title-section { gap: 8px; }
+      h1 { font-size: 14px; }
+      .subtitle { font-size: 11px; }
+      .filters { gap: 4px; }
+      .filter-group { padding: 2px; }
+      .filter-btn { padding: 4px 8px; font-size: 10px; }
+      th, td { padding: 8px 6px; font-size: 11px; }
+      .stats-bar { gap: 10px; padding: 6px 10px; }
+      .stat-value { font-size: 13px; }
+      .stat-label { font-size: 9px; }
+      .search-box { width: 120px; font-size: 11px; padding: 5px 8px; }
+      .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      table { min-width: 650px; }
+    }
+
+    @media (max-width: 480px) {
+      .filter-btn { padding: 4px 6px; font-size: 9px; }
+      .search-box { width: 100px; }
+      .stat-value { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <div class="title-section">
+        <h1>NBA Props</h1>
+        <span class="subtitle">2026-01-05 • V2.1</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <input type="text" class="search-box" id="searchInput" placeholder="Search...">
+        <a href="picks_2026-01-04.html" style="color: #64748b; text-decoration: none; font-size: 12px;">←</a>
+        <a href="picks_2026-01-06.html" style="color: #64748b; text-decoration: none; font-size: 12px;">→</a>
+        <a href="index.html" style="color: #64748b; text-decoration: none; font-size: 11px;">All</a>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-label">Rec</span>
+        <span class="stat-value" id="record">-</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Win%</span>
+        <span class="stat-value" id="winRate">-</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Pend</span>
+        <span class="stat-value" id="pending">-</span>
+      </div>
+      <div style="border-left: 1px solid #e2e8f0; height: 24px; margin: 0 8px;"></div>
+      <div class="stat-item">
+        <span class="stat-label">Wagered</span>
+        <span class="stat-value" id="totalWagered">$0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Profit</span>
+        <span class="stat-value" id="totalProfit">$0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">ROI</span>
+        <span class="stat-value" id="wagerRoi">—</span>
+      </div>
+    </div>
+
+
+    <div class="filters">
+      <div class="filter-group" data-filter="stat">
+        <button class="filter-btn active" data-value="all">All</button>
+        <button class="filter-btn" data-value="points">PTS</button>
+        <button class="filter-btn" data-value="rebounds">REB</button>
+        <button class="filter-btn" data-value="assists">AST</button>
+      </div>
+      <div class="filter-group" data-filter="direction">
+        <button class="filter-btn active" data-value="all">All</button>
+        <button class="filter-btn" data-value="OVER">Over</button>
+        <button class="filter-btn" data-value="UNDER">Under</button>
+      </div>
+      <div class="filter-group" data-filter="tier">
+        <button class="filter-btn active" data-value="all">All</button>
+        <button class="filter-btn" data-value="low">📉 &lt;10</button>
+        <button class="filter-btn" data-value="okay">🧊 10-15</button>
+        <button class="filter-btn" data-value="best">⭐ 15-20</button>
+        <button class="filter-btn" data-value="good">🔥 20-25</button>
+        <button class="filter-btn" data-value="caution">⚠️ 25+</button>
+      </div>
+      <div class="filter-group" data-filter="result">
+        <button class="filter-btn active" data-value="all">All</button>
+        <button class="filter-btn" data-value="WIN">Wins</button>
+        <button class="filter-btn" data-value="LOSS">Losses</button>
+        <button class="filter-btn" data-value="PENDING">Pending</button>
+      </div>
+      <div class="filter-group" data-filter="wagered">
+        <button class="filter-btn active" data-value="all">All</button>
+        <button class="filter-btn" data-value="yes">💰 Wagered</button>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+      <div class="count" id="count"></div>
+      <button class="filter-btn" id="toggleDetails" onclick="toggleDetailCols()">+ Details</button>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="player_name">Player</th>
+            <th data-sort="stat">Stat</th>
+            <th data-sort="line">Line</th>
+            <th data-sort="odds">Odds</th>
+            <th data-sort="edge" title="Market Edge">Edge</th>
+            <th data-sort="direction">Play</th>
+            <th>Wager</th>
+            <th data-sort="actual">Actual</th>
+            <th data-sort="result">Result</th>
+            <th data-sort="matchup" class="detail-col hidden">Matchup</th>
+            <th data-sort="avg" class="detail-col hidden">Avg</th>
+            <th data-sort="l10" class="detail-col hidden">L10</th>
+            <th data-sort="proj" class="detail-col hidden">Proj</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="parlayBar" class="parlay-bar">
+    <div class="parlay-tabs" id="parlayTabs"></div>
+    <div class="parlay-bar-header" onclick="toggleParlayExpand()">
+      <span>🎰 <span id="parlayCount">0</span> Picks</span>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span id="parlayOddsSmall">—</span>
+        <span style="color: #059669; font-weight: 600;" id="parlayPayoutSmall">—</span>
+        <span id="parlayExpand">▲</span>
+      </div>
+    </div>
+    <div id="parlayDetails" class="parlay-details">
+      <div id="parlayLegs"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #e2e8f0; margin-top: 8px;">
+        <button class="filter-btn" onclick="clearParlay()">Clear</button>
+        <div style="display: flex; gap: 16px; align-items: center;">
+          <div><span style="color: #64748b; font-size: 10px;">ODDS</span> <strong id="parlayOdds">—</strong></div>
+          <div>
+            <span style="color: #64748b; font-size: 10px;">WAGER</span>
+            <button class="wager-btn" id="parlayWagerBtn" onclick="cycleParlayWager()">—</button>
+          </div>
+          <div><span style="color: #64748b; font-size: 10px;">PAYOUT</span> <strong id="parlayPayout" style="color: #059669;">—</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const allPicks = [{"player_name": "Julian Strawther", "team": "DEN", "matchup": "DEN @ PHI", "stat": "points", "line": 13.5, "odds": -105, "avg": 3.6, "l10": 3.3, "proj": 3.6, "edge": -39.0, "direction": "UNDER", "actual": 6.0, "result": "WIN"}, {"player_name": "DaRon Holmes II", "team": "DEN", "matchup": "DEN @ PHI", "stat": "rebounds", "line": 5.5, "odds": -106, "avg": 1.8, "l10": 1.8, "proj": 1.8, "edge": -38.6, "direction": "UNDER", "actual": 1.0, "result": "WIN"}, {"player_name": "Jalen Pickett", "team": "DEN", "matchup": "DEN @ PHI", "stat": "points", "line": 11.5, "odds": 100, "avg": 3.8, "l10": 5.2, "proj": 4.2, "edge": -35.7, "direction": "UNDER", "actual": 29.0, "result": "LOSS"}, {"player_name": "Jalen Pickett", "team": "DEN", "matchup": "DEN @ PHI", "stat": "assists", "line": 5.5, "odds": -104, "avg": 1.8, "l10": 2.6, "proj": 2.0, "edge": -32.3, "direction": "UNDER", "actual": 7.0, "result": "LOSS"}, {"player_name": "DaRon Holmes II", "team": "DEN", "matchup": "DEN @ PHI", "stat": "points", "line": 10.5, "odds": -112, "avg": 4.5, "l10": 4.5, "proj": 4.1, "edge": -31.1, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Jalen Pickett", "team": "DEN", "matchup": "DEN @ PHI", "stat": "rebounds", "line": 3.5, "odds": 118, "avg": 1.8, "l10": 2.5, "proj": 2.3, "edge": -22.7, "direction": "UNDER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Julian Strawther", "team": "DEN", "matchup": "DEN @ PHI", "stat": "rebounds", "line": 3.5, "odds": -169, "avg": 1.2, "l10": 0.8, "proj": 0.9, "edge": -21.6, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Paul Reed Jr", "team": "DET", "matchup": "DET vs NYK", "stat": "rebounds", "line": 8.5, "odds": -133, "avg": 4.0, "l10": 3.5, "proj": 3.5, "edge": -20.6, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Paul Reed Jr", "team": "DET", "matchup": "DET vs NYK", "stat": "points", "line": 10.5, "odds": -111, "avg": 5.6, "l10": 3.7, "proj": 4.4, "edge": -19.6, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Bruce Brown", "team": "DEN", "matchup": "DEN @ PHI", "stat": "points", "line": 11.5, "odds": -104, "avg": 7.1, "l10": 8.3, "proj": 7.4, "edge": -17.9, "direction": "UNDER", "actual": 19.0, "result": "LOSS"}, {"player_name": "Kris Dunn", "team": "LAC", "matchup": "LAC vs GSW", "stat": "assists", "line": 4.5, "odds": -114, "avg": 3.0, "l10": 3.6, "proj": 2.8, "edge": -17.7, "direction": "UNDER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Isaiah Stewart II", "team": "DET", "matchup": "DET vs NYK", "stat": "rebounds", "line": 6.5, "odds": 113, "avg": 5.6, "l10": 5.0, "proj": 4.8, "edge": -17.1, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Al Horford", "team": "GSW", "matchup": "GSW @ LAC", "stat": "assists", "line": 1.5, "odds": 146, "avg": 1.6, "l10": 1.9, "proj": 1.9, "edge": 16.4, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Brice Sensabaugh", "team": "UTA", "matchup": "UTA @ POR", "stat": "rebounds", "line": 4.5, "odds": -152, "avg": 2.8, "l10": 3.2, "proj": 2.6, "edge": -16.3, "direction": "UNDER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Paul Reed Jr", "team": "DET", "matchup": "DET vs NYK", "stat": "assists", "line": 1.5, "odds": 131, "avg": 1.0, "l10": 0.9, "proj": 1.0, "edge": -15.7, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Bruce Brown", "team": "DEN", "matchup": "DEN @ PHI", "stat": "assists", "line": 3.5, "odds": 116, "avg": 2.2, "l10": 2.5, "proj": 2.6, "edge": -15.3, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "DaRon Holmes II", "team": "DEN", "matchup": "DEN @ PHI", "stat": "assists", "line": 3.5, "odds": -135, "avg": 1.3, "l10": 1.3, "proj": 1.3, "edge": -15.2, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Karl-Anthony Towns", "team": "NYK", "matchup": "NYK @ DET", "stat": "assists", "line": 2.5, "odds": 108, "avg": 2.9, "l10": 1.9, "proj": 1.8, "edge": -14.8, "direction": "UNDER", "actual": 1.0, "result": "WIN"}, {"player_name": "Peyton Watson", "team": "DEN", "matchup": "DEN @ PHI", "stat": "rebounds", "line": 5.5, "odds": -101, "avg": 4.6, "l10": 3.4, "proj": 3.8, "edge": -14.8, "direction": "UNDER", "actual": 7.0, "result": "LOSS"}, {"player_name": "Jaden Ivey", "team": "DET", "matchup": "DET vs NYK", "stat": "points", "line": 9.5, "odds": -115, "avg": 8.0, "l10": 8.2, "proj": 6.5, "edge": -14.7, "direction": "UNDER", "actual": 16.0, "result": "LOSS"}, {"player_name": "Clint Capela", "team": "HOU", "matchup": "HOU vs PHX", "stat": "points", "line": 5.5, "odds": 100, "avg": 3.9, "l10": 4.4, "proj": 4.1, "edge": -14.7, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Aaron Wiggins", "team": "OKC", "matchup": "OKC vs CHA", "stat": "rebounds", "line": 3.5, "odds": -116, "avg": 2.8, "l10": 2.2, "proj": 2.0, "edge": -14.2, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Kon Knueppel", "team": "CHA", "matchup": "CHA @ OKC", "stat": "points", "line": 16.5, "odds": -110, "avg": 19.4, "l10": 22.8, "proj": 21.7, "edge": 13.9, "direction": "OVER", "actual": 23.0, "result": "WIN"}, {"player_name": "Kawhi Leonard", "team": "LAC", "matchup": "LAC vs GSW", "stat": "assists", "line": 4.5, "odds": -101, "avg": 3.4, "l10": 4.0, "proj": 3.6, "edge": -13.7, "direction": "UNDER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Grayson Allen", "team": "PHX", "matchup": "PHX @ HOU", "stat": "assists", "line": 2.5, "odds": 107, "avg": 4.1, "l10": 3.4, "proj": 3.2, "edge": 13.1, "direction": "OVER", "actual": 6.0, "result": "WIN"}, {"player_name": "Aaron Wiggins", "team": "OKC", "matchup": "OKC vs CHA", "stat": "points", "line": 10.5, "odds": -103, "avg": 10.3, "l10": 5.8, "proj": 6.5, "edge": -13.1, "direction": "UNDER", "actual": 11.0, "result": "LOSS"}, {"player_name": "Svi Mykhailiuk", "team": "UTA", "matchup": "UTA @ POR", "stat": "rebounds", "line": 2.5, "odds": 135, "avg": 2.6, "l10": 2.3, "proj": 2.7, "edge": 12.8, "direction": "OVER", "actual": 1.0, "result": "LOSS"}, {"player_name": "Peyton Watson", "team": "DEN", "matchup": "DEN @ PHI", "stat": "assists", "line": 2.5, "odds": -172, "avg": 1.5, "l10": 1.0, "proj": 1.0, "edge": -12.4, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Peyton Watson", "team": "DEN", "matchup": "DEN @ PHI", "stat": "points", "line": 19.5, "odds": -115, "avg": 11.8, "l10": 15.3, "proj": 14.2, "edge": -12.3, "direction": "UNDER", "actual": 24.0, "result": "LOSS"}, {"player_name": "Kristaps Porzingis", "team": "ATL", "matchup": "ATL @ TOR", "stat": "points", "line": 13.5, "odds": -109, "avg": 17.9, "l10": 17.8, "proj": 17.1, "edge": 12.1, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Collin Sexton", "team": "CHA", "matchup": "CHA @ OKC", "stat": "points", "line": 10.5, "odds": -128, "avg": 15.3, "l10": 14.4, "proj": 13.7, "edge": 12.0, "direction": "OVER", "actual": 10.0, "result": "LOSS"}, {"player_name": "Dorian Finney-Smith", "team": "HOU", "matchup": "HOU vs PHX", "stat": "points", "line": 3.5, "odds": -104, "avg": 2.4, "l10": 2.4, "proj": 2.3, "edge": -12.0, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "Nicolas Batum", "team": "LAC", "matchup": "LAC vs GSW", "stat": "rebounds", "line": 2.5, "odds": 132, "avg": 2.6, "l10": 2.4, "proj": 2.3, "edge": -11.9, "direction": "UNDER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Brandon Miller", "team": "CHA", "matchup": "CHA @ OKC", "stat": "rebounds", "line": 4.5, "odds": 114, "avg": 4.2, "l10": 5.4, "proj": 5.4, "edge": 11.7, "direction": "OVER", "actual": 6.0, "result": "WIN"}, {"player_name": "Keyonte George", "team": "UTA", "matchup": "UTA @ POR", "stat": "assists", "line": 6.5, "odds": 101, "avg": 6.9, "l10": 7.2, "proj": 7.4, "edge": 11.1, "direction": "OVER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Robert Williams", "team": "POR", "matchup": "POR vs UTA", "stat": "rebounds", "line": 6.5, "odds": -108, "avg": 6.4, "l10": 8.4, "proj": 8.1, "edge": 10.9, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Collin Murray-Boyles", "team": "TOR", "matchup": "TOR vs ATL", "stat": "points", "line": 8.5, "odds": -112, "avg": 6.8, "l10": 5.8, "proj": 5.9, "edge": -10.8, "direction": "UNDER", "actual": 17.0, "result": "LOSS"}, {"player_name": "LaMelo Ball", "team": "CHA", "matchup": "CHA @ OKC", "stat": "assists", "line": 6.5, "odds": 117, "avg": 8.2, "l10": 7.1, "proj": 7.1, "edge": 10.7, "direction": "OVER", "actual": 2.0, "result": "LOSS"}, {"player_name": "Al Horford", "team": "GSW", "matchup": "GSW @ LAC", "stat": "rebounds", "line": 3.5, "odds": -110, "avg": 4.5, "l10": 4.5, "proj": 4.3, "edge": 10.4, "direction": "OVER", "actual": 5.0, "result": "WIN"}, {"player_name": "Zaccharie Risacher", "team": "ATL", "matchup": "ATL @ TOR", "stat": "rebounds", "line": 3.5, "odds": 115, "avg": 3.1, "l10": 4.2, "proj": 3.8, "edge": 10.2, "direction": "OVER", "actual": 4.0, "result": "WIN"}, {"player_name": "Keyonte George", "team": "UTA", "matchup": "UTA @ POR", "stat": "points", "line": 25.5, "odds": -106, "avg": 24.5, "l10": 29.9, "proj": 29.3, "edge": 10.0, "direction": "OVER", "actual": 15.0, "result": "LOSS"}, {"player_name": "Grayson Allen", "team": "PHX", "matchup": "PHX @ HOU", "stat": "points", "line": 11.5, "odds": -110, "avg": 16.3, "l10": 16.3, "proj": 15.1, "edge": 9.8, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Mark Williams", "team": "PHX", "matchup": "PHX @ HOU", "stat": "points", "line": 9.5, "odds": -101, "avg": 12.7, "l10": 11.6, "proj": 12.0, "edge": 9.8, "direction": "OVER", "actual": 4.0, "result": "LOSS"}, {"player_name": "VJ Edgecombe", "team": "PHI", "matchup": "PHI vs DEN", "stat": "assists", "line": 3.5, "odds": -128, "avg": 3.9, "l10": 3.6, "proj": 4.5, "edge": 9.5, "direction": "OVER", "actual": 9.0, "result": "WIN"}, {"player_name": "Royce O'Neale", "team": "PHX", "matchup": "PHX @ HOU", "stat": "assists", "line": 2.5, "odds": 129, "avg": 2.8, "l10": 2.4, "proj": 2.5, "edge": 9.3, "direction": "OVER", "actual": 3.0, "result": "WIN"}, {"player_name": "Miles McBride", "team": "NYK", "matchup": "NYK @ DET", "stat": "points", "line": 10.5, "odds": -118, "avg": 12.4, "l10": 14.9, "proj": 13.8, "edge": 9.2, "direction": "OVER", "actual": 17.0, "result": "WIN"}, {"player_name": "Brandon Ingram", "team": "TOR", "matchup": "TOR vs ATL", "stat": "rebounds", "line": 5.5, "odds": -139, "avg": 6.0, "l10": 6.4, "proj": 7.0, "edge": 9.2, "direction": "OVER", "actual": 9.0, "result": "WIN"}, {"player_name": "Steven Adams", "team": "HOU", "matchup": "HOU vs PHX", "stat": "rebounds", "line": 8.5, "odds": -101, "avg": 8.4, "l10": 7.0, "proj": 7.6, "edge": -9.2, "direction": "UNDER", "actual": 11.0, "result": "LOSS"}, {"player_name": "Clint Capela", "team": "HOU", "matchup": "HOU vs PHX", "stat": "rebounds", "line": 5.5, "odds": 104, "avg": 4.8, "l10": 4.8, "proj": 4.7, "edge": -9.2, "direction": "UNDER", "actual": 1.0, "result": "WIN"}, {"player_name": "Isaiah Collier", "team": "UTA", "matchup": "UTA @ POR", "stat": "assists", "line": 6.5, "odds": 102, "avg": 6.6, "l10": 8.6, "proj": 7.4, "edge": 9.1, "direction": "OVER", "actual": 8.0, "result": "WIN"}, {"player_name": "Jordan Walsh", "team": "BOS", "matchup": "BOS vs CHI", "stat": "points", "line": 5.5, "odds": 100, "avg": 7.0, "l10": 7.0, "proj": 7.3, "edge": 9.1, "direction": "OVER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Joel Embiid", "team": "PHI", "matchup": "PHI vs DEN", "stat": "rebounds", "line": 7.5, "odds": -106, "avg": 6.8, "l10": 7.5, "proj": 6.5, "edge": -9.1, "direction": "UNDER", "actual": 10.0, "result": "LOSS"}, {"player_name": "Devin Booker", "team": "PHX", "matchup": "PHX @ HOU", "stat": "assists", "line": 5.5, "odds": 103, "avg": 6.4, "l10": 5.7, "proj": 4.8, "edge": -9.0, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "Nikola Vucevic", "team": "CHI", "matchup": "CHI @ BOS", "stat": "rebounds", "line": 9.5, "odds": -112, "avg": 8.9, "l10": 8.3, "proj": 8.0, "edge": -9.0, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Ayo Dosunmu", "team": "CHI", "matchup": "CHI @ BOS", "stat": "rebounds", "line": 2.5, "odds": 114, "avg": 2.7, "l10": 2.9, "proj": 2.3, "edge": -9.0, "direction": "UNDER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Tre Jones", "team": "CHI", "matchup": "CHI @ BOS", "stat": "rebounds", "line": 2.5, "odds": 106, "avg": 2.8, "l10": 2.1, "proj": 2.1, "edge": -9.0, "direction": "UNDER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Jamal Shead", "team": "TOR", "matchup": "TOR vs ATL", "stat": "assists", "line": 4.5, "odds": -114, "avg": 5.3, "l10": 5.7, "proj": 5.6, "edge": 8.9, "direction": "OVER", "actual": 5.0, "result": "WIN"}, {"player_name": "Derrick White", "team": "BOS", "matchup": "BOS vs CHI", "stat": "points", "line": 18.5, "odds": -123, "avg": 18.7, "l10": 21.4, "proj": 22.5, "edge": 8.9, "direction": "OVER", "actual": 10.0, "result": "LOSS"}, {"player_name": "Kris Murray", "team": "POR", "matchup": "POR vs UTA", "stat": "points", "line": 6.5, "odds": -116, "avg": 6.0, "l10": 7.0, "proj": 8.2, "edge": 8.8, "direction": "OVER", "actual": 10.0, "result": "WIN"}, {"player_name": "Amen Thompson", "team": "HOU", "matchup": "HOU vs PHX", "stat": "assists", "line": 5.5, "odds": -109, "avg": 5.2, "l10": 5.2, "proj": 4.6, "edge": -8.7, "direction": "UNDER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Miles Bridges", "team": "CHA", "matchup": "CHA @ OKC", "stat": "rebounds", "line": 6.5, "odds": 108, "avg": 6.4, "l10": 6.6, "proj": 7.1, "edge": 8.7, "direction": "OVER", "actual": 11.0, "result": "WIN"}, {"player_name": "Matas Buzelis", "team": "CHI", "matchup": "CHI @ BOS", "stat": "rebounds", "line": 5.5, "odds": 105, "avg": 5.4, "l10": 5.0, "proj": 4.9, "edge": -8.5, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "Quinten Post", "team": "GSW", "matchup": "GSW @ LAC", "stat": "assists", "line": 1.5, "odds": 130, "avg": 1.5, "l10": 1.7, "proj": 1.4, "edge": 8.4, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Isaiah Stewart II", "team": "DET", "matchup": "DET vs NYK", "stat": "points", "line": 11.5, "odds": -120, "avg": 9.9, "l10": 8.9, "proj": 8.7, "edge": -8.4, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Jalen Williams", "team": "OKC", "matchup": "OKC vs CHA", "stat": "points", "line": 18.5, "odds": -123, "avg": 17.2, "l10": 17.2, "proj": 16.1, "edge": -8.4, "direction": "UNDER", "actual": 16.0, "result": "WIN"}, {"player_name": "Tre Jones", "team": "CHI", "matchup": "CHI @ BOS", "stat": "assists", "line": 5.5, "odds": 109, "avg": 5.3, "l10": 6.1, "proj": 5.0, "edge": -8.3, "direction": "UNDER", "actual": 4.0, "result": "WIN"}, {"player_name": "Steven Adams", "team": "HOU", "matchup": "HOU vs PHX", "stat": "points", "line": 7.5, "odds": -127, "avg": 6.0, "l10": 5.2, "proj": 5.6, "edge": -8.3, "direction": "UNDER", "actual": 8.0, "result": "LOSS"}, {"player_name": "R.J. Barrett", "team": "TOR", "matchup": "TOR vs ATL", "stat": "rebounds", "line": 5.5, "odds": 115, "avg": 5.0, "l10": 5.2, "proj": 5.7, "edge": 8.2, "direction": "OVER", "actual": 6.0, "result": "WIN"}, {"player_name": "Aaron Wiggins", "team": "OKC", "matchup": "OKC vs CHA", "stat": "assists", "line": 1.5, "odds": 120, "avg": 1.7, "l10": 1.0, "proj": 1.5, "edge": -8.1, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Jamal Shead", "team": "TOR", "matchup": "TOR vs ATL", "stat": "rebounds", "line": 1.5, "odds": 134, "avg": 1.8, "l10": 1.7, "proj": 1.7, "edge": -8.0, "direction": "UNDER", "actual": 2.0, "result": "LOSS"}, {"player_name": "Collin Gillespie", "team": "PHX", "matchup": "PHX @ HOU", "stat": "points", "line": 12.5, "odds": -108, "avg": 13.8, "l10": 15.6, "proj": 14.7, "edge": 7.9, "direction": "OVER", "actual": 11.0, "result": "LOSS"}, {"player_name": "Kristaps Porzingis", "team": "ATL", "matchup": "ATL @ TOR", "stat": "rebounds", "line": 4.5, "odds": -114, "avg": 5.5, "l10": 4.8, "proj": 5.6, "edge": 7.9, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Jordan Clarkson", "team": "NYK", "matchup": "NYK @ DET", "stat": "points", "line": 7.5, "odds": -112, "avg": 10.1, "l10": 11.2, "proj": 9.8, "edge": 7.8, "direction": "OVER", "actual": 8.0, "result": "WIN"}, {"player_name": "Ivica Zubac", "team": "LAC", "matchup": "LAC vs GSW", "stat": "points", "line": 13.5, "odds": 100, "avg": 15.2, "l10": 13.3, "proj": 11.7, "edge": -7.8, "direction": "UNDER", "actual": 10.0, "result": "WIN"}, {"player_name": "Brandin Podziemski", "team": "GSW", "matchup": "GSW @ LAC", "stat": "points", "line": 10.5, "odds": -103, "avg": 12.3, "l10": 12.7, "proj": 12.0, "edge": 7.8, "direction": "OVER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Derrick White", "team": "BOS", "matchup": "BOS vs CHI", "stat": "rebounds", "line": 4.5, "odds": -118, "avg": 4.3, "l10": 4.8, "proj": 5.2, "edge": 7.8, "direction": "OVER", "actual": 6.0, "result": "WIN"}, {"player_name": "Tari Eason", "team": "HOU", "matchup": "HOU vs PHX", "stat": "points", "line": 13.5, "odds": -105, "avg": 12.1, "l10": 12.1, "proj": 11.8, "edge": -7.7, "direction": "UNDER", "actual": 12.0, "result": "WIN"}, {"player_name": "Jabari Smith Jr", "team": "HOU", "matchup": "HOU vs PHX", "stat": "rebounds", "line": 6.5, "odds": -122, "avg": 6.9, "l10": 7.7, "proj": 7.7, "edge": 7.6, "direction": "OVER", "actual": 7.0, "result": "WIN"}, {"player_name": "Cade Cunningham", "team": "DET", "matchup": "DET vs NYK", "stat": "points", "line": 28.5, "odds": -123, "avg": 26.7, "l10": 26.1, "proj": 24.8, "edge": -7.5, "direction": "UNDER", "actual": 29.0, "result": "LOSS"}, {"player_name": "Patrick Williams", "team": "CHI", "matchup": "CHI @ BOS", "stat": "points", "line": 7.5, "odds": -123, "avg": 6.7, "l10": 4.8, "proj": 5.4, "edge": -7.5, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Draymond Green", "team": "GSW", "matchup": "GSW @ LAC", "stat": "points", "line": 7.5, "odds": -119, "avg": 8.5, "l10": 9.0, "proj": 9.5, "edge": 7.5, "direction": "OVER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Brandon Ingram", "team": "TOR", "matchup": "TOR vs ATL", "stat": "points", "line": 22.5, "odds": -120, "avg": 22.3, "l10": 24.3, "proj": 25.6, "edge": 7.4, "direction": "OVER", "actual": 19.0, "result": "LOSS"}, {"player_name": "Jaylen Brown", "team": "BOS", "matchup": "BOS vs CHI", "stat": "points", "line": 30.5, "odds": -109, "avg": 30.1, "l10": 32.4, "proj": 33.1, "edge": 7.4, "direction": "OVER", "actual": 14.0, "result": "LOSS"}, {"player_name": "Scottie Barnes", "team": "TOR", "matchup": "TOR vs ATL", "stat": "rebounds", "line": 9.5, "odds": 100, "avg": 8.6, "l10": 10.5, "proj": 10.3, "edge": 7.4, "direction": "OVER", "actual": 8.0, "result": "LOSS"}, {"player_name": "Luke Kennard", "team": "ATL", "matchup": "ATL @ TOR", "stat": "points", "line": 6.5, "odds": 103, "avg": 7.2, "l10": 6.2, "proj": 7.4, "edge": 7.3, "direction": "OVER", "actual": 10.0, "result": "WIN"}, {"player_name": "De'Anthony Melton", "team": "GSW", "matchup": "GSW @ LAC", "stat": "points", "line": 8.5, "odds": 103, "avg": 8.2, "l10": 7.6, "proj": 7.5, "edge": -7.2, "direction": "UNDER", "actual": 5.0, "result": "WIN"}, {"player_name": "LaMelo Ball", "team": "CHA", "matchup": "CHA @ OKC", "stat": "rebounds", "line": 4.5, "odds": 111, "avg": 5.2, "l10": 3.5, "proj": 4.7, "edge": 7.2, "direction": "OVER", "actual": 2.0, "result": "LOSS"}, {"player_name": "Moses Moody", "team": "GSW", "matchup": "GSW @ LAC", "stat": "rebounds", "line": 2.5, "odds": -141, "avg": 3.3, "l10": 3.5, "proj": 3.5, "edge": 7.0, "direction": "OVER", "actual": 2.0, "result": "LOSS"}, {"player_name": "Kristaps Porzingis", "team": "ATL", "matchup": "ATL @ TOR", "stat": "assists", "line": 1.5, "odds": -149, "avg": 2.9, "l10": 2.6, "proj": 2.8, "edge": 6.9, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Ja'Kobe Walter", "team": "TOR", "matchup": "TOR vs ATL", "stat": "points", "line": 5.5, "odds": -111, "avg": 6.1, "l10": 7.3, "proj": 7.3, "edge": 6.9, "direction": "OVER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Dillon Brooks", "team": "PHX", "matchup": "PHX @ HOU", "stat": "points", "line": 19.5, "odds": -125, "avg": 21.4, "l10": 20.7, "proj": 16.7, "edge": -6.9, "direction": "UNDER", "actual": 15.0, "result": "WIN"}, {"player_name": "Collin Murray-Boyles", "team": "TOR", "matchup": "TOR vs ATL", "stat": "rebounds", "line": 5.5, "odds": 103, "avg": 4.2, "l10": 6.0, "proj": 5.0, "edge": -6.9, "direction": "UNDER", "actual": 7.0, "result": "LOSS"}, {"player_name": "Onyeka Okongwu", "team": "ATL", "matchup": "ATL @ TOR", "stat": "assists", "line": 2.5, "odds": -127, "avg": 3.3, "l10": 3.7, "proj": 3.3, "edge": 6.7, "direction": "OVER", "actual": 3.0, "result": "WIN"}, {"player_name": "Brandin Podziemski", "team": "GSW", "matchup": "GSW @ LAC", "stat": "assists", "line": 3.5, "odds": 130, "avg": 3.4, "l10": 4.2, "proj": 3.2, "edge": 6.7, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Toumani Camara", "team": "POR", "matchup": "POR vs UTA", "stat": "assists", "line": 2.5, "odds": 134, "avg": 2.8, "l10": 2.5, "proj": 2.8, "edge": -6.7, "direction": "UNDER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Vit Krejci", "team": "ATL", "matchup": "ATL @ TOR", "stat": "points", "line": 8.5, "odds": -108, "avg": 10.6, "l10": 11.1, "proj": 10.5, "edge": 6.7, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Svi Mykhailiuk", "team": "UTA", "matchup": "UTA @ POR", "stat": "points", "line": 6.5, "odds": -105, "avg": 9.0, "l10": 8.8, "proj": 8.0, "edge": 6.7, "direction": "OVER", "actual": 8.0, "result": "WIN"}, {"player_name": "Brice Sensabaugh", "team": "UTA", "matchup": "UTA @ POR", "stat": "points", "line": 13.5, "odds": -114, "avg": 9.9, "l10": 11.7, "proj": 11.4, "edge": -6.6, "direction": "UNDER", "actual": 8.0, "result": "WIN"}, {"player_name": "Payton Pritchard", "team": "BOS", "matchup": "BOS vs CHI", "stat": "assists", "line": 5.5, "odds": 108, "avg": 5.3, "l10": 6.1, "proj": 5.7, "edge": 6.5, "direction": "OVER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Bruce Brown", "team": "DEN", "matchup": "DEN @ PHI", "stat": "rebounds", "line": 5.5, "odds": -130, "avg": 4.2, "l10": 5.1, "proj": 4.4, "edge": -6.5, "direction": "UNDER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Onyeka Okongwu", "team": "ATL", "matchup": "ATL @ TOR", "stat": "points", "line": 14.5, "odds": -118, "avg": 16.2, "l10": 16.5, "proj": 17.1, "edge": 6.4, "direction": "OVER", "actual": 17.0, "result": "WIN"}, {"player_name": "Jalen Johnson", "team": "ATL", "matchup": "ATL @ TOR", "stat": "assists", "line": 8.5, "odds": -103, "avg": 8.5, "l10": 9.4, "proj": 7.9, "edge": -6.3, "direction": "UNDER", "actual": 7.0, "result": "WIN"}, {"player_name": "Collin Sexton", "team": "CHA", "matchup": "CHA @ OKC", "stat": "assists", "line": 3.5, "odds": 117, "avg": 4.4, "l10": 4.1, "proj": 3.4, "edge": 6.3, "direction": "OVER", "actual": 1.0, "result": "LOSS"}, {"player_name": "Paul George", "team": "PHI", "matchup": "PHI vs DEN", "stat": "assists", "line": 3.5, "odds": 100, "avg": 3.4, "l10": 3.6, "proj": 3.7, "edge": 6.3, "direction": "OVER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Luke Kennard", "team": "ATL", "matchup": "ATL @ TOR", "stat": "rebounds", "line": 2.5, "odds": 132, "avg": 2.1, "l10": 2.3, "proj": 2.2, "edge": 6.3, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Luguentz Dort", "team": "OKC", "matchup": "OKC vs CHA", "stat": "rebounds", "line": 3.5, "odds": -132, "avg": 3.5, "l10": 2.9, "proj": 2.6, "edge": -6.3, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Ajay Mitchell", "team": "OKC", "matchup": "OKC vs CHA", "stat": "points", "line": 12.5, "odds": -108, "avg": 13.9, "l10": 12.8, "proj": 13.7, "edge": 6.1, "direction": "OVER", "actual": 11.0, "result": "LOSS"}, {"player_name": "Shaedon Sharpe", "team": "POR", "matchup": "POR vs UTA", "stat": "assists", "line": 2.5, "odds": 130, "avg": 2.4, "l10": 2.4, "proj": 2.7, "edge": -6.0, "direction": "UNDER", "actual": 7.0, "result": "LOSS"}, {"player_name": "Coby White", "team": "CHI", "matchup": "CHI @ BOS", "stat": "points", "line": 16.5, "odds": 100, "avg": 19.2, "l10": 16.4, "proj": 17.6, "edge": 6.0, "direction": "OVER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Brandon Miller", "team": "CHA", "matchup": "CHA @ OKC", "stat": "assists", "line": 2.5, "odds": 124, "avg": 3.4, "l10": 3.6, "proj": 2.8, "edge": -5.9, "direction": "UNDER", "actual": 1.0, "result": "WIN"}, {"player_name": "Joel Embiid", "team": "PHI", "matchup": "PHI vs DEN", "stat": "assists", "line": 3.5, "odds": 114, "avg": 3.4, "l10": 3.5, "proj": 3.5, "edge": -5.8, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Keyonte George", "team": "UTA", "matchup": "UTA @ POR", "stat": "rebounds", "line": 3.5, "odds": -152, "avg": 4.2, "l10": 4.9, "proj": 4.7, "edge": 5.8, "direction": "OVER", "actual": 4.0, "result": "WIN"}, {"player_name": "Matas Buzelis", "team": "CHI", "matchup": "CHI @ BOS", "stat": "assists", "line": 1.5, "odds": 107, "avg": 1.7, "l10": 1.8, "proj": 1.4, "edge": -5.7, "direction": "UNDER", "actual": 2.0, "result": "LOSS"}, {"player_name": "Moses Moody", "team": "GSW", "matchup": "GSW @ LAC", "stat": "assists", "line": 0.5, "odds": -233, "avg": 1.6, "l10": 1.8, "proj": 1.8, "edge": 5.7, "direction": "OVER", "actual": 1.0, "result": "WIN"}, {"player_name": "Kevin Huerter", "team": "CHI", "matchup": "CHI @ BOS", "stat": "points", "line": 12.5, "odds": -118, "avg": 12.0, "l10": 11.6, "proj": 10.6, "edge": -5.7, "direction": "UNDER", "actual": 8.0, "result": "WIN"}, {"player_name": "Neemias Queta", "team": "BOS", "matchup": "BOS vs CHI", "stat": "points", "line": 9.5, "odds": -133, "avg": 10.1, "l10": 9.9, "proj": 11.4, "edge": 5.7, "direction": "OVER", "actual": 13.0, "result": "WIN"}, {"player_name": "Collin Gillespie", "team": "PHX", "matchup": "PHX @ HOU", "stat": "assists", "line": 4.5, "odds": -106, "avg": 5.1, "l10": 5.8, "proj": 5.0, "edge": 5.6, "direction": "OVER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Duncan Robinson", "team": "DET", "matchup": "DET vs NYK", "stat": "assists", "line": 1.5, "odds": 117, "avg": 2.0, "l10": 2.1, "proj": 1.6, "edge": -5.5, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Luke Kennard", "team": "ATL", "matchup": "ATL @ TOR", "stat": "assists", "line": 2.5, "odds": 133, "avg": 2.3, "l10": 2.2, "proj": 2.2, "edge": 5.5, "direction": "OVER", "actual": 4.0, "result": "WIN"}, {"player_name": "Jalen Williams", "team": "OKC", "matchup": "OKC vs CHA", "stat": "assists", "line": 5.5, "odds": 102, "avg": 5.5, "l10": 5.2, "proj": 5.7, "edge": 5.5, "direction": "OVER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Luka Garza", "team": "BOS", "matchup": "BOS vs CHI", "stat": "points", "line": 9.5, "odds": -128, "avg": 7.3, "l10": 8.3, "proj": 7.1, "edge": -5.5, "direction": "UNDER", "actual": 8.0, "result": "WIN"}, {"player_name": "Jimmy Butler", "team": "GSW", "matchup": "GSW @ LAC", "stat": "points", "line": 18.5, "odds": -115, "avg": 19.5, "l10": 19.6, "proj": 20.4, "edge": 5.4, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Dillon Brooks", "team": "PHX", "matchup": "PHX @ HOU", "stat": "rebounds", "line": 3.5, "odds": -175, "avg": 3.1, "l10": 3.2, "proj": 2.4, "edge": -5.4, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Kawhi Leonard", "team": "LAC", "matchup": "LAC vs GSW", "stat": "points", "line": 31.5, "odds": -108, "avg": 28.3, "l10": 32.3, "proj": 33.7, "edge": 5.3, "direction": "OVER", "actual": 24.0, "result": "LOSS"}, {"player_name": "Brook Lopez", "team": "LAC", "matchup": "LAC vs GSW", "stat": "rebounds", "line": 2.5, "odds": -139, "avg": 2.6, "l10": 3.7, "proj": 3.6, "edge": 5.3, "direction": "OVER", "actual": 3.0, "result": "WIN"}, {"player_name": "Patrick Williams", "team": "CHI", "matchup": "CHI @ BOS", "stat": "rebounds", "line": 3.5, "odds": -154, "avg": 2.9, "l10": 1.8, "proj": 2.4, "edge": -5.0, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Nikola Vucevic", "team": "CHI", "matchup": "CHI @ BOS", "stat": "assists", "line": 3.5, "odds": 108, "avg": 3.5, "l10": 3.8, "proj": 3.5, "edge": -4.9, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Brandon Ingram", "team": "TOR", "matchup": "TOR vs ATL", "stat": "assists", "line": 3.5, "odds": 111, "avg": 3.7, "l10": 3.4, "proj": 3.6, "edge": -4.8, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "LaMelo Ball", "team": "CHA", "matchup": "CHA @ OKC", "stat": "points", "line": 16.5, "odds": -118, "avg": 19.8, "l10": 19.7, "proj": 18.6, "edge": 4.8, "direction": "OVER", "actual": 16.0, "result": "LOSS"}, {"player_name": "Quentin Grimes", "team": "PHI", "matchup": "PHI vs DEN", "stat": "assists", "line": 3.5, "odds": 101, "avg": 4.2, "l10": 3.7, "proj": 3.7, "edge": 4.7, "direction": "OVER", "actual": 2.0, "result": "LOSS"}, {"player_name": "Jusuf Nurkic", "team": "UTA", "matchup": "UTA @ POR", "stat": "assists", "line": 4.5, "odds": 116, "avg": 4.3, "l10": 4.8, "proj": 4.3, "edge": 4.7, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Tyrese Maxey", "team": "PHI", "matchup": "PHI vs DEN", "stat": "points", "line": 26.5, "odds": -118, "avg": 31.1, "l10": 28.0, "proj": 29.1, "edge": 4.7, "direction": "OVER", "actual": 28.0, "result": "WIN"}, {"player_name": "VJ Edgecombe", "team": "PHI", "matchup": "PHI vs DEN", "stat": "points", "line": 15.5, "odds": -127, "avg": 16.5, "l10": 20.6, "proj": 18.3, "edge": 4.7, "direction": "OVER", "actual": 17.0, "result": "WIN"}, {"player_name": "Javonte Green", "team": "DET", "matchup": "DET vs NYK", "stat": "rebounds", "line": 2.5, "odds": 131, "avg": 2.8, "l10": 3.2, "proj": 3.0, "edge": -4.7, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Collin Murray-Boyles", "team": "TOR", "matchup": "TOR vs ATL", "stat": "assists", "line": 1.5, "odds": -132, "avg": 1.4, "l10": 1.8, "proj": 2.0, "edge": 4.6, "direction": "OVER", "actual": 7.0, "result": "WIN"}, {"player_name": "Ajay Mitchell", "team": "OKC", "matchup": "OKC vs CHA", "stat": "assists", "line": 3.5, "odds": 114, "avg": 3.6, "l10": 3.6, "proj": 3.7, "edge": -4.6, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Donovan Clingan", "team": "POR", "matchup": "POR vs UTA", "stat": "points", "line": 12.5, "odds": -106, "avg": 11.2, "l10": 14.5, "proj": 13.4, "edge": 4.6, "direction": "OVER", "actual": 12.0, "result": "LOSS"}, {"player_name": "OG Anunoby", "team": "NYK", "matchup": "NYK @ DET", "stat": "assists", "line": 2.5, "odds": 122, "avg": 2.2, "l10": 2.6, "proj": 2.2, "edge": 4.5, "direction": "OVER", "actual": 1.0, "result": "LOSS"}, {"player_name": "Isaiah Stewart II", "team": "DET", "matchup": "DET vs NYK", "stat": "assists", "line": 1.5, "odds": -133, "avg": 1.2, "l10": 0.9, "proj": 1.0, "edge": -4.5, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Vit Krejci", "team": "ATL", "matchup": "ATL @ TOR", "stat": "assists", "line": 1.5, "odds": -108, "avg": 1.6, "l10": 1.3, "proj": 1.3, "edge": -4.5, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Jamal Shead", "team": "TOR", "matchup": "TOR vs ATL", "stat": "points", "line": 6.5, "odds": -128, "avg": 6.7, "l10": 7.7, "proj": 8.1, "edge": 4.5, "direction": "OVER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Nicolas Batum", "team": "LAC", "matchup": "LAC vs GSW", "stat": "points", "line": 5.5, "odds": 104, "avg": 5.0, "l10": 6.2, "proj": 5.4, "edge": -4.5, "direction": "UNDER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Duncan Robinson", "team": "DET", "matchup": "DET vs NYK", "stat": "rebounds", "line": 2.5, "odds": 104, "avg": 2.8, "l10": 2.3, "proj": 2.5, "edge": 4.5, "direction": "OVER", "actual": 5.0, "result": "WIN"}, {"player_name": "Mikal Bridges", "team": "NYK", "matchup": "NYK @ DET", "stat": "points", "line": 15.5, "odds": -111, "avg": 16.2, "l10": 15.7, "proj": 16.7, "edge": 4.4, "direction": "OVER", "actual": 10.0, "result": "LOSS"}, {"player_name": "Mikal Bridges", "team": "NYK", "matchup": "NYK @ DET", "stat": "rebounds", "line": 4.5, "odds": -101, "avg": 4.6, "l10": 4.6, "proj": 4.6, "edge": 4.3, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Sandro Mamukelashvili", "team": "TOR", "matchup": "TOR vs ATL", "stat": "rebounds", "line": 5.5, "odds": -139, "avg": 5.0, "l10": 6.7, "proj": 6.6, "edge": 4.3, "direction": "OVER", "actual": 6.0, "result": "WIN"}, {"player_name": "Neemias Queta", "team": "BOS", "matchup": "BOS vs CHI", "stat": "rebounds", "line": 8.5, "odds": -128, "avg": 7.7, "l10": 6.5, "proj": 7.4, "edge": -4.3, "direction": "UNDER", "actual": 13.0, "result": "LOSS"}, {"player_name": "Ausar Thompson", "team": "DET", "matchup": "DET vs NYK", "stat": "points", "line": 11.5, "odds": -104, "avg": 11.5, "l10": 10.7, "proj": 11.0, "edge": -4.2, "direction": "UNDER", "actual": 10.0, "result": "WIN"}, {"player_name": "Paul George", "team": "PHI", "matchup": "PHI vs DEN", "stat": "points", "line": 14.5, "odds": -125, "avg": 15.9, "l10": 16.9, "proj": 16.7, "edge": 4.2, "direction": "OVER", "actual": 8.0, "result": "LOSS"}, {"player_name": "Miles McBride", "team": "NYK", "matchup": "NYK @ DET", "stat": "rebounds", "line": 2.5, "odds": -103, "avg": 2.6, "l10": 2.8, "proj": 2.4, "edge": -4.2, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Nickeil Alexander-Walker", "team": "ATL", "matchup": "ATL @ TOR", "stat": "points", "line": 20.5, "odds": -104, "avg": 20.7, "l10": 21.6, "proj": 21.3, "edge": 4.1, "direction": "OVER", "actual": 14.0, "result": "LOSS"}, {"player_name": "Reed Sheppard", "team": "HOU", "matchup": "HOU vs PHX", "stat": "points", "line": 12.5, "odds": -110, "avg": 13.3, "l10": 14.2, "proj": 13.6, "edge": 4.1, "direction": "OVER", "actual": 11.0, "result": "LOSS"}, {"player_name": "Coby White", "team": "CHI", "matchup": "CHI @ BOS", "stat": "rebounds", "line": 2.5, "odds": 128, "avg": 3.2, "l10": 3.3, "proj": 3.0, "edge": -4.1, "direction": "UNDER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Brandin Podziemski", "team": "GSW", "matchup": "GSW @ LAC", "stat": "rebounds", "line": 3.5, "odds": -147, "avg": 4.5, "l10": 4.2, "proj": 4.5, "edge": 4.1, "direction": "OVER", "actual": 4.0, "result": "WIN"}, {"player_name": "Ayo Dosunmu", "team": "CHI", "matchup": "CHI @ BOS", "stat": "assists", "line": 3.5, "odds": -109, "avg": 3.3, "l10": 3.9, "proj": 3.2, "edge": -4.0, "direction": "UNDER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Quinten Post", "team": "GSW", "matchup": "GSW @ LAC", "stat": "points", "line": 7.5, "odds": -109, "avg": 8.0, "l10": 8.7, "proj": 8.4, "edge": 4.0, "direction": "OVER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Al Horford", "team": "GSW", "matchup": "GSW @ LAC", "stat": "points", "line": 5.5, "odds": -109, "avg": 6.8, "l10": 7.6, "proj": 6.2, "edge": 4.0, "direction": "OVER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Luka Garza", "team": "BOS", "matchup": "BOS vs CHI", "stat": "rebounds", "line": 5.5, "odds": -133, "avg": 4.1, "l10": 4.3, "proj": 4.5, "edge": -4.0, "direction": "UNDER", "actual": 4.0, "result": "WIN"}, {"player_name": "Deni Avdija", "team": "POR", "matchup": "POR vs UTA", "stat": "rebounds", "line": 7.5, "odds": -108, "avg": 7.3, "l10": 7.5, "proj": 7.9, "edge": 4.0, "direction": "OVER", "actual": 8.0, "result": "WIN"}, {"player_name": "Cason Wallace", "team": "OKC", "matchup": "OKC vs CHA", "stat": "points", "line": 6.5, "odds": -115, "avg": 7.7, "l10": 6.0, "proj": 7.4, "edge": 3.9, "direction": "OVER", "actual": 2.0, "result": "LOSS"}, {"player_name": "Vit Krejci", "team": "ATL", "matchup": "ATL @ TOR", "stat": "rebounds", "line": 2.5, "odds": -128, "avg": 2.3, "l10": 2.1, "proj": 2.0, "edge": -3.9, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Zaccharie Risacher", "team": "ATL", "matchup": "ATL @ TOR", "stat": "points", "line": 9.5, "odds": -114, "avg": 10.6, "l10": 9.3, "proj": 8.5, "edge": -3.8, "direction": "UNDER", "actual": 16.0, "result": "LOSS"}, {"player_name": "Kon Knueppel", "team": "CHA", "matchup": "CHA @ OKC", "stat": "rebounds", "line": 4.5, "odds": 102, "avg": 5.1, "l10": 4.2, "proj": 4.5, "edge": 3.8, "direction": "OVER", "actual": 5.0, "result": "WIN"}, {"player_name": "Jaylen Brown", "team": "BOS", "matchup": "BOS vs CHI", "stat": "assists", "line": 5.5, "odds": 105, "avg": 5.0, "l10": 5.1, "proj": 5.4, "edge": 3.6, "direction": "OVER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Dyson Daniels", "team": "ATL", "matchup": "ATL @ TOR", "stat": "assists", "line": 6.5, "odds": 114, "avg": 6.1, "l10": 7.0, "proj": 6.1, "edge": 3.5, "direction": "OVER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Mitchell Robinson", "team": "NYK", "matchup": "NYK @ DET", "stat": "rebounds", "line": 8.5, "odds": -128, "avg": 8.6, "l10": 9.1, "proj": 7.5, "edge": -3.5, "direction": "UNDER", "actual": 10.0, "result": "LOSS"}, {"player_name": "Isaiah Collier", "team": "UTA", "matchup": "UTA @ POR", "stat": "rebounds", "line": 2.5, "odds": -108, "avg": 2.4, "l10": 3.2, "proj": 2.7, "edge": 3.5, "direction": "OVER", "actual": 3.0, "result": "WIN"}, {"player_name": "Derrick White", "team": "BOS", "matchup": "BOS vs CHI", "stat": "assists", "line": 5.5, "odds": -118, "avg": 5.3, "l10": 5.2, "proj": 5.1, "edge": -3.4, "direction": "UNDER", "actual": 7.0, "result": "LOSS"}, {"player_name": "Jusuf Nurkic", "team": "UTA", "matchup": "UTA @ POR", "stat": "rebounds", "line": 9.5, "odds": -123, "avg": 9.5, "l10": 9.6, "proj": 10.3, "edge": 3.4, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Lauri Markkanen", "team": "UTA", "matchup": "UTA @ POR", "stat": "rebounds", "line": 6.5, "odds": -123, "avg": 6.9, "l10": 8.2, "proj": 7.2, "edge": 3.4, "direction": "OVER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Coby White", "team": "CHI", "matchup": "CHI @ BOS", "stat": "assists", "line": 3.5, "odds": -130, "avg": 4.7, "l10": 3.8, "proj": 4.2, "edge": 3.3, "direction": "OVER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Isaiah Collier", "team": "UTA", "matchup": "UTA @ POR", "stat": "points", "line": 7.5, "odds": -127, "avg": 8.4, "l10": 10.3, "proj": 9.1, "edge": 3.3, "direction": "OVER", "actual": 10.0, "result": "WIN"}, {"player_name": "Isaac Okoro", "team": "CHI", "matchup": "CHI @ BOS", "stat": "rebounds", "line": 3.5, "odds": -175, "avg": 2.6, "l10": 2.5, "proj": 2.5, "edge": -3.3, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "Kawhi Leonard", "team": "LAC", "matchup": "LAC vs GSW", "stat": "rebounds", "line": 6.5, "odds": -123, "avg": 6.3, "l10": 7.5, "proj": 7.1, "edge": 3.3, "direction": "OVER", "actual": 12.0, "result": "WIN"}, {"player_name": "Lauri Markkanen", "team": "UTA", "matchup": "UTA @ POR", "stat": "assists", "line": 1.5, "odds": 113, "avg": 2.1, "l10": 1.9, "proj": 1.7, "edge": -3.2, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Jordan Goodwin", "team": "PHX", "matchup": "PHX @ HOU", "stat": "points", "line": 7.5, "odds": -125, "avg": 9.2, "l10": 10.2, "proj": 9.0, "edge": 3.2, "direction": "OVER", "actual": 11.0, "result": "WIN"}, {"player_name": "De'Anthony Melton", "team": "GSW", "matchup": "GSW @ LAC", "stat": "rebounds", "line": 2.5, "odds": -101, "avg": 2.5, "l10": 2.7, "proj": 2.5, "edge": -3.2, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Scottie Barnes", "team": "TOR", "matchup": "TOR vs ATL", "stat": "assists", "line": 5.5, "odds": -108, "avg": 5.3, "l10": 5.2, "proj": 5.7, "edge": 3.1, "direction": "OVER", "actual": 10.0, "result": "WIN"}, {"player_name": "Deni Avdija", "team": "POR", "matchup": "POR vs UTA", "stat": "assists", "line": 9.5, "odds": 104, "avg": 7.1, "l10": 9.1, "proj": 9.4, "edge": 3.1, "direction": "OVER", "actual": 9.0, "result": "LOSS"}, {"player_name": "Jalen Johnson", "team": "ATL", "matchup": "ATL @ TOR", "stat": "points", "line": 23.5, "odds": -114, "avg": 24.0, "l10": 25.8, "proj": 24.8, "edge": 3.1, "direction": "OVER", "actual": 13.0, "result": "LOSS"}, {"player_name": "Shaedon Sharpe", "team": "POR", "matchup": "POR vs UTA", "stat": "points", "line": 24.5, "odds": -120, "avg": 21.3, "l10": 20.5, "proj": 22.8, "edge": -3.1, "direction": "UNDER", "actual": 29.0, "result": "LOSS"}, {"player_name": "Kevin Durant", "team": "HOU", "matchup": "HOU vs PHX", "stat": "rebounds", "line": 4.5, "odds": -132, "avg": 5.0, "l10": 5.7, "proj": 5.2, "edge": 3.1, "direction": "OVER", "actual": 10.0, "result": "WIN"}, {"player_name": "Jaylen Brown", "team": "BOS", "matchup": "BOS vs CHI", "stat": "rebounds", "line": 6.5, "odds": -122, "avg": 6.3, "l10": 6.6, "proj": 7.1, "edge": 3.0, "direction": "OVER", "actual": 8.0, "result": "WIN"}, {"player_name": "Chet Holmgren", "team": "OKC", "matchup": "OKC vs CHA", "stat": "rebounds", "line": 7.5, "odds": 108, "avg": 8.3, "l10": 8.7, "proj": 7.8, "edge": -3.0, "direction": "UNDER", "actual": 6.0, "result": "WIN"}, {"player_name": "Tre Jones", "team": "CHI", "matchup": "CHI @ BOS", "stat": "points", "line": 11.5, "odds": -112, "avg": 12.1, "l10": 11.5, "proj": 12.1, "edge": 2.9, "direction": "OVER", "actual": 10.0, "result": "LOSS"}, {"player_name": "Nickeil Alexander-Walker", "team": "ATL", "matchup": "ATL @ TOR", "stat": "rebounds", "line": 3.5, "odds": 105, "avg": 3.4, "l10": 2.8, "proj": 3.4, "edge": 2.9, "direction": "OVER", "actual": 5.0, "result": "WIN"}, {"player_name": "Jalen Williams", "team": "OKC", "matchup": "OKC vs CHA", "stat": "rebounds", "line": 5.5, "odds": -154, "avg": 5.2, "l10": 5.1, "proj": 4.5, "edge": -2.9, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Ivica Zubac", "team": "LAC", "matchup": "LAC vs GSW", "stat": "rebounds", "line": 9.5, "odds": -118, "avg": 11.0, "l10": 10.0, "proj": 10.2, "edge": 2.9, "direction": "OVER", "actual": 11.0, "result": "WIN"}, {"player_name": "Jimmy Butler", "team": "GSW", "matchup": "GSW @ LAC", "stat": "rebounds", "line": 5.5, "odds": -128, "avg": 5.5, "l10": 5.0, "proj": 4.9, "edge": -2.9, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Kris Dunn", "team": "LAC", "matchup": "LAC vs GSW", "stat": "rebounds", "line": 3.5, "odds": -116, "avg": 2.9, "l10": 3.3, "proj": 3.2, "edge": -2.9, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "OG Anunoby", "team": "NYK", "matchup": "NYK @ DET", "stat": "points", "line": 16.5, "odds": -127, "avg": 15.5, "l10": 15.3, "proj": 14.5, "edge": -2.8, "direction": "UNDER", "actual": 5.0, "result": "WIN"}, {"player_name": "Jalen Brunson", "team": "NYK", "matchup": "NYK @ DET", "stat": "rebounds", "line": 3.5, "odds": 103, "avg": 3.3, "l10": 3.7, "proj": 3.4, "edge": 2.8, "direction": "OVER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Kris Murray", "team": "POR", "matchup": "POR vs UTA", "stat": "rebounds", "line": 3.5, "odds": 114, "avg": 4.0, "l10": 4.0, "proj": 3.9, "edge": -2.8, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "Kevin Huerter", "team": "CHI", "matchup": "CHI @ BOS", "stat": "assists", "line": 2.5, "odds": -108, "avg": 2.4, "l10": 2.6, "proj": 2.6, "edge": 2.7, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Dyson Daniels", "team": "ATL", "matchup": "ATL @ TOR", "stat": "points", "line": 12.5, "odds": -114, "avg": 11.7, "l10": 13.6, "proj": 11.7, "edge": -2.7, "direction": "UNDER", "actual": 11.0, "result": "WIN"}, {"player_name": "Payton Pritchard", "team": "BOS", "matchup": "BOS vs CHI", "stat": "rebounds", "line": 4.5, "odds": -118, "avg": 4.4, "l10": 4.8, "proj": 4.2, "edge": -2.7, "direction": "UNDER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Miles Bridges", "team": "CHA", "matchup": "CHA @ OKC", "stat": "points", "line": 16.5, "odds": -103, "avg": 20.2, "l10": 18.4, "proj": 16.3, "edge": -2.6, "direction": "UNDER", "actual": 17.0, "result": "LOSS"}, {"player_name": "Lauri Markkanen", "team": "UTA", "matchup": "UTA @ POR", "stat": "points", "line": 27.5, "odds": -108, "avg": 27.9, "l10": 27.9, "proj": 28.2, "edge": 2.6, "direction": "OVER", "actual": 22.0, "result": "LOSS"}, {"player_name": "Immanuel Quickley", "team": "TOR", "matchup": "TOR vs ATL", "stat": "rebounds", "line": 3.5, "odds": -164, "avg": 4.2, "l10": 4.2, "proj": 4.6, "edge": 2.6, "direction": "OVER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Grayson Allen", "team": "PHX", "matchup": "PHX @ HOU", "stat": "rebounds", "line": 2.5, "odds": -143, "avg": 2.7, "l10": 2.0, "proj": 1.8, "edge": -2.6, "direction": "UNDER", "actual": 3.0, "result": "LOSS"}, {"player_name": "John Collins", "team": "LAC", "matchup": "LAC vs GSW", "stat": "rebounds", "line": 5.5, "odds": -111, "avg": 4.8, "l10": 4.6, "proj": 5.3, "edge": -2.6, "direction": "UNDER", "actual": 4.0, "result": "WIN"}, {"player_name": "Jalen Brunson", "team": "NYK", "matchup": "NYK @ DET", "stat": "assists", "line": 6.5, "odds": -127, "avg": 6.5, "l10": 6.8, "proj": 5.9, "edge": -2.5, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Jimmy Butler", "team": "GSW", "matchup": "GSW @ LAC", "stat": "assists", "line": 4.5, "odds": -105, "avg": 5.0, "l10": 5.0, "proj": 4.4, "edge": -2.5, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Onyeka Okongwu", "team": "ATL", "matchup": "ATL @ TOR", "stat": "rebounds", "line": 7.5, "odds": -108, "avg": 7.7, "l10": 8.2, "proj": 7.7, "edge": 2.5, "direction": "OVER", "actual": 12.0, "result": "WIN"}, {"player_name": "Immanuel Quickley", "team": "TOR", "matchup": "TOR vs ATL", "stat": "assists", "line": 6.5, "odds": 106, "avg": 6.3, "l10": 6.6, "proj": 6.3, "edge": 2.4, "direction": "OVER", "actual": 1.0, "result": "LOSS"}, {"player_name": "Stephen Curry", "team": "GSW", "matchup": "GSW @ LAC", "stat": "points", "line": 27.5, "odds": -122, "avg": 28.8, "l10": 30.2, "proj": 30.0, "edge": 2.4, "direction": "OVER", "actual": 27.0, "result": "LOSS"}, {"player_name": "Devin Booker", "team": "PHX", "matchup": "PHX @ HOU", "stat": "points", "line": 23.5, "odds": -106, "avg": 25.7, "l10": 27.2, "proj": 23.8, "edge": 2.3, "direction": "OVER", "actual": 27.0, "result": "WIN"}, {"player_name": "Tari Eason", "team": "HOU", "matchup": "HOU vs PHX", "stat": "rebounds", "line": 5.5, "odds": 110, "avg": 5.6, "l10": 6.3, "proj": 5.8, "edge": -2.3, "direction": "UNDER", "actual": 8.0, "result": "LOSS"}, {"player_name": "Devin Booker", "team": "PHX", "matchup": "PHX @ HOU", "stat": "rebounds", "line": 3.5, "odds": -111, "avg": 4.2, "l10": 3.9, "proj": 3.7, "edge": 2.3, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Collin Gillespie", "team": "PHX", "matchup": "PHX @ HOU", "stat": "rebounds", "line": 3.5, "odds": -108, "avg": 4.0, "l10": 4.3, "proj": 3.6, "edge": 2.3, "direction": "OVER", "actual": 6.0, "result": "WIN"}, {"player_name": "Reed Sheppard", "team": "HOU", "matchup": "HOU vs PHX", "stat": "rebounds", "line": 2.5, "odds": -108, "avg": 2.8, "l10": 2.0, "proj": 2.6, "edge": 2.3, "direction": "OVER", "actual": 3.0, "result": "WIN"}, {"player_name": "Stephen Curry", "team": "GSW", "matchup": "GSW @ LAC", "stat": "rebounds", "line": 3.5, "odds": 102, "avg": 3.9, "l10": 4.2, "proj": 3.7, "edge": -2.3, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Cade Cunningham", "team": "DET", "matchup": "DET vs NYK", "stat": "assists", "line": 9.5, "odds": 109, "avg": 9.6, "l10": 10.7, "proj": 9.1, "edge": 2.2, "direction": "OVER", "actual": 13.0, "result": "WIN"}, {"player_name": "Mitchell Robinson", "team": "NYK", "matchup": "NYK @ DET", "stat": "points", "line": 4.5, "odds": -108, "avg": 4.4, "l10": 5.7, "proj": 4.3, "edge": -2.2, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Kevin Durant", "team": "HOU", "matchup": "HOU vs PHX", "stat": "points", "line": 27.5, "odds": -111, "avg": 25.7, "l10": 27.5, "proj": 26.9, "edge": -2.2, "direction": "UNDER", "actual": 26.0, "result": "WIN"}, {"player_name": "Robert Williams", "team": "POR", "matchup": "POR vs UTA", "stat": "points", "line": 7.5, "odds": -101, "avg": 6.0, "l10": 6.9, "proj": 7.4, "edge": 2.2, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Shai Gilgeous-Alexander", "team": "OKC", "matchup": "OKC vs CHA", "stat": "rebounds", "line": 4.5, "odds": -111, "avg": 4.5, "l10": 4.2, "proj": 4.3, "edge": -2.2, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Tyrese Maxey", "team": "PHI", "matchup": "PHI vs DEN", "stat": "assists", "line": 7.5, "odds": 107, "avg": 7.1, "l10": 6.7, "proj": 7.1, "edge": 2.1, "direction": "OVER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Jalen Brunson", "team": "NYK", "matchup": "NYK @ DET", "stat": "points", "line": 29.5, "odds": -114, "avg": 29.3, "l10": 31.4, "proj": 30.3, "edge": 2.1, "direction": "OVER", "actual": 25.0, "result": "LOSS"}, {"player_name": "Sandro Mamukelashvili", "team": "TOR", "matchup": "TOR vs ATL", "stat": "points", "line": 11.5, "odds": -106, "avg": 10.5, "l10": 12.3, "proj": 11.7, "edge": 2.1, "direction": "OVER", "actual": 12.0, "result": "WIN"}, {"player_name": "Toumani Camara", "team": "POR", "matchup": "POR vs UTA", "stat": "points", "line": 14.5, "odds": -116, "avg": 12.8, "l10": 13.9, "proj": 15.3, "edge": 2.1, "direction": "OVER", "actual": 15.0, "result": "WIN"}, {"player_name": "Neemias Queta", "team": "BOS", "matchup": "BOS vs CHI", "stat": "assists", "line": 1.5, "odds": -110, "avg": 1.5, "l10": 1.0, "proj": 1.4, "edge": -2.0, "direction": "UNDER", "actual": 1.0, "result": "WIN"}, {"player_name": "Payton Pritchard", "team": "BOS", "matchup": "BOS vs CHI", "stat": "points", "line": 17.5, "odds": -114, "avg": 16.8, "l10": 16.0, "proj": 16.6, "edge": -2.0, "direction": "UNDER", "actual": 21.0, "result": "LOSS"}, {"player_name": "Sam Hauser", "team": "BOS", "matchup": "BOS vs CHI", "stat": "points", "line": 8.5, "odds": -106, "avg": 7.4, "l10": 8.1, "proj": 8.6, "edge": 2.0, "direction": "OVER", "actual": 9.0, "result": "WIN"}, {"player_name": "Jabari Smith Jr", "team": "HOU", "matchup": "HOU vs PHX", "stat": "points", "line": 15.5, "odds": -112, "avg": 15.5, "l10": 15.7, "proj": 15.9, "edge": 2.0, "direction": "OVER", "actual": 17.0, "result": "WIN"}, {"player_name": "Cade Cunningham", "team": "DET", "matchup": "DET vs NYK", "stat": "rebounds", "line": 5.5, "odds": -128, "avg": 6.3, "l10": 6.6, "proj": 6.1, "edge": 2.0, "direction": "OVER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Jaden Ivey", "team": "DET", "matchup": "DET vs NYK", "stat": "rebounds", "line": 2.5, "odds": -175, "avg": 2.0, "l10": 1.5, "proj": 1.5, "edge": -2.0, "direction": "UNDER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Tyrese Maxey", "team": "PHI", "matchup": "PHI vs DEN", "stat": "rebounds", "line": 3.5, "odds": 113, "avg": 4.6, "l10": 4.5, "proj": 3.9, "edge": -2.0, "direction": "UNDER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Sandro Mamukelashvili", "team": "TOR", "matchup": "TOR vs ATL", "stat": "assists", "line": 1.5, "odds": 123, "avg": 1.9, "l10": 2.2, "proj": 2.1, "edge": -1.9, "direction": "UNDER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Nikola Vucevic", "team": "CHI", "matchup": "CHI @ BOS", "stat": "points", "line": 17.5, "odds": -125, "avg": 16.5, "l10": 18.6, "proj": 16.0, "edge": -1.9, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Isaiah Joe", "team": "OKC", "matchup": "OKC vs CHA", "stat": "points", "line": 7.5, "odds": -110, "avg": 10.3, "l10": 5.8, "proj": 7.1, "edge": -1.9, "direction": "UNDER", "actual": 5.0, "result": "WIN"}, {"player_name": "Dyson Daniels", "team": "ATL", "matchup": "ATL @ TOR", "stat": "rebounds", "line": 6.5, "odds": 103, "avg": 6.4, "l10": 6.7, "proj": 6.3, "edge": 1.9, "direction": "OVER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Cason Wallace", "team": "OKC", "matchup": "OKC vs CHA", "stat": "rebounds", "line": 2.5, "odds": -106, "avg": 3.0, "l10": 2.8, "proj": 2.5, "edge": -1.8, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Nickeil Alexander-Walker", "team": "ATL", "matchup": "ATL @ TOR", "stat": "assists", "line": 2.5, "odds": 128, "avg": 3.2, "l10": 2.8, "proj": 3.1, "edge": -1.7, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Ivica Zubac", "team": "LAC", "matchup": "LAC vs GSW", "stat": "assists", "line": 2.5, "odds": -114, "avg": 2.4, "l10": 2.2, "proj": 2.4, "edge": -1.7, "direction": "UNDER", "actual": 3.0, "result": "LOSS"}, {"player_name": "Joel Embiid", "team": "PHI", "matchup": "PHI vs DEN", "stat": "points", "line": 25.5, "odds": -114, "avg": 22.8, "l10": 24.7, "proj": 24.7, "edge": -1.7, "direction": "UNDER", "actual": 32.0, "result": "LOSS"}, {"player_name": "Jusuf Nurkic", "team": "UTA", "matchup": "UTA @ POR", "stat": "points", "line": 11.5, "odds": -109, "avg": 9.9, "l10": 13.6, "proj": 11.3, "edge": -1.6, "direction": "UNDER", "actual": 0.0, "result": "VOID"}, {"player_name": "Jalen Johnson", "team": "ATL", "matchup": "ATL @ TOR", "stat": "rebounds", "line": 9.5, "odds": -143, "avg": 10.2, "l10": 9.7, "proj": 10.4, "edge": 1.6, "direction": "OVER", "actual": 14.0, "result": "WIN"}, {"player_name": "R.J. Barrett", "team": "TOR", "matchup": "TOR vs ATL", "stat": "points", "line": 19.5, "odds": -105, "avg": 19.4, "l10": 18.0, "proj": 19.5, "edge": 1.5, "direction": "OVER", "actual": 17.0, "result": "LOSS"}, {"player_name": "Matas Buzelis", "team": "CHI", "matchup": "CHI @ BOS", "stat": "points", "line": 15.5, "odds": -116, "avg": 14.4, "l10": 16.4, "proj": 14.8, "edge": -1.5, "direction": "UNDER", "actual": 26.0, "result": "LOSS"}, {"player_name": "VJ Edgecombe", "team": "PHI", "matchup": "PHI vs DEN", "stat": "rebounds", "line": 5.5, "odds": -147, "avg": 5.3, "l10": 4.6, "proj": 4.7, "edge": -1.5, "direction": "UNDER", "actual": 8.0, "result": "LOSS"}, {"player_name": "Draymond Green", "team": "GSW", "matchup": "GSW @ LAC", "stat": "rebounds", "line": 5.5, "odds": -116, "avg": 5.9, "l10": 5.2, "proj": 5.3, "edge": -1.5, "direction": "UNDER", "actual": 5.0, "result": "WIN"}, {"player_name": "Sam Hauser", "team": "BOS", "matchup": "BOS vs CHI", "stat": "rebounds", "line": 3.5, "odds": 102, "avg": 3.5, "l10": 3.9, "proj": 3.3, "edge": 1.4, "direction": "OVER", "actual": 1.0, "result": "LOSS"}, {"player_name": "Kon Knueppel", "team": "CHA", "matchup": "CHA @ OKC", "stat": "assists", "line": 2.5, "odds": -130, "avg": 3.5, "l10": 4.1, "proj": 3.0, "edge": 1.3, "direction": "OVER", "actual": 5.0, "result": "WIN"}, {"player_name": "Anfernee Simons", "team": "BOS", "matchup": "BOS vs CHI", "stat": "points", "line": 13.5, "odds": -127, "avg": 13.1, "l10": 12.6, "proj": 12.3, "edge": -1.3, "direction": "UNDER", "actual": 27.0, "result": "LOSS"}, {"player_name": "Isaac Okoro", "team": "CHI", "matchup": "CHI @ BOS", "stat": "points", "line": 8.5, "odds": -118, "avg": 8.8, "l10": 9.4, "proj": 9.2, "edge": 1.3, "direction": "OVER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Kris Dunn", "team": "LAC", "matchup": "LAC vs GSW", "stat": "points", "line": 8.5, "odds": -119, "avg": 8.1, "l10": 9.3, "proj": 9.0, "edge": 1.3, "direction": "OVER", "actual": 16.0, "result": "WIN"}, {"player_name": "Chet Holmgren", "team": "OKC", "matchup": "OKC vs CHA", "stat": "points", "line": 16.5, "odds": -119, "avg": 18.2, "l10": 16.8, "proj": 17.3, "edge": 1.2, "direction": "OVER", "actual": 15.0, "result": "LOSS"}, {"player_name": "Quentin Grimes", "team": "PHI", "matchup": "PHI vs DEN", "stat": "points", "line": 11.5, "odds": 101, "avg": 14.6, "l10": 9.7, "proj": 12.1, "edge": -1.2, "direction": "UNDER", "actual": 16.0, "result": "LOSS"}, {"player_name": "Amen Thompson", "team": "HOU", "matchup": "HOU vs PHX", "stat": "rebounds", "line": 7.5, "odds": -135, "avg": 7.4, "l10": 8.0, "proj": 6.8, "edge": -1.2, "direction": "UNDER", "actual": 7.0, "result": "WIN"}, {"player_name": "Mark Williams", "team": "PHX", "matchup": "PHX @ HOU", "stat": "rebounds", "line": 7.5, "odds": -135, "avg": 8.2, "l10": 7.4, "proj": 6.7, "edge": -1.2, "direction": "UNDER", "actual": 8.0, "result": "LOSS"}, {"player_name": "Miles McBride", "team": "NYK", "matchup": "NYK @ DET", "stat": "assists", "line": 2.5, "odds": -156, "avg": 2.4, "l10": 2.2, "proj": 2.0, "edge": -1.1, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Shai Gilgeous-Alexander", "team": "OKC", "matchup": "OKC vs CHA", "stat": "assists", "line": 6.5, "odds": -118, "avg": 6.4, "l10": 6.3, "proj": 6.7, "edge": 1.1, "direction": "OVER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Karl-Anthony Towns", "team": "NYK", "matchup": "NYK @ DET", "stat": "points", "line": 21.5, "odds": -104, "avg": 22.0, "l10": 20.9, "proj": 21.1, "edge": 1.1, "direction": "OVER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Karl-Anthony Towns", "team": "NYK", "matchup": "NYK @ DET", "stat": "rebounds", "line": 11.5, "odds": -133, "avg": 11.8, "l10": 11.6, "proj": 10.8, "edge": -1.1, "direction": "UNDER", "actual": 1.0, "result": "WIN"}, {"player_name": "OG Anunoby", "team": "NYK", "matchup": "NYK @ DET", "stat": "rebounds", "line": 5.5, "odds": -119, "avg": 5.6, "l10": 6.1, "proj": 5.8, "edge": 1.1, "direction": "OVER", "actual": 2.0, "result": "LOSS"}, {"player_name": "Jordan Goodwin", "team": "PHX", "matchup": "PHX @ HOU", "stat": "rebounds", "line": 3.5, "odds": 117, "avg": 4.6, "l10": 5.4, "proj": 4.4, "edge": -1.1, "direction": "UNDER", "actual": 1.0, "result": "WIN"}, {"player_name": "Shaedon Sharpe", "team": "POR", "matchup": "POR vs UTA", "stat": "rebounds", "line": 4.5, "odds": -147, "avg": 4.4, "l10": 4.0, "proj": 3.8, "edge": -1.1, "direction": "UNDER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Luguentz Dort", "team": "OKC", "matchup": "OKC vs CHA", "stat": "points", "line": 7.5, "odds": -119, "avg": 8.4, "l10": 9.2, "proj": 7.9, "edge": 1.0, "direction": "OVER", "actual": 5.0, "result": "LOSS"}, {"player_name": "Ausar Thompson", "team": "DET", "matchup": "DET vs NYK", "stat": "rebounds", "line": 5.5, "odds": -115, "avg": 5.8, "l10": 5.4, "proj": 5.3, "edge": -1.0, "direction": "UNDER", "actual": 7.0, "result": "LOSS"}, {"player_name": "Mikal Bridges", "team": "NYK", "matchup": "NYK @ DET", "stat": "assists", "line": 4.5, "odds": 109, "avg": 4.4, "l10": 5.0, "proj": 4.0, "edge": 0.9, "direction": "OVER", "actual": 1.0, "result": "LOSS"}, {"player_name": "Donovan Clingan", "team": "POR", "matchup": "POR vs UTA", "stat": "assists", "line": 1.5, "odds": -147, "avg": 1.8, "l10": 1.8, "proj": 2.0, "edge": 0.9, "direction": "OVER", "actual": 2.0, "result": "WIN"}, {"player_name": "Quinten Post", "team": "GSW", "matchup": "GSW @ LAC", "stat": "rebounds", "line": 3.5, "odds": -125, "avg": 4.1, "l10": 4.2, "proj": 3.9, "edge": 0.9, "direction": "OVER", "actual": 2.0, "result": "LOSS"}, {"player_name": "Donovan Clingan", "team": "POR", "matchup": "POR vs UTA", "stat": "rebounds", "line": 11.5, "odds": -116, "avg": 10.6, "l10": 11.5, "proj": 11.3, "edge": -0.9, "direction": "UNDER", "actual": 17.0, "result": "LOSS"}, {"player_name": "R.J. Barrett", "team": "TOR", "matchup": "TOR vs ATL", "stat": "assists", "line": 3.5, "odds": -116, "avg": 3.6, "l10": 3.4, "proj": 3.4, "edge": -0.8, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Immanuel Quickley", "team": "TOR", "matchup": "TOR vs ATL", "stat": "points", "line": 15.5, "odds": -108, "avg": 16.2, "l10": 15.5, "proj": 15.6, "edge": -0.8, "direction": "UNDER", "actual": 16.0, "result": "LOSS"}, {"player_name": "Toumani Camara", "team": "POR", "matchup": "POR vs UTA", "stat": "rebounds", "line": 4.5, "odds": -147, "avg": 5.3, "l10": 5.4, "proj": 5.2, "edge": 0.8, "direction": "OVER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Draymond Green", "team": "GSW", "matchup": "GSW @ LAC", "stat": "assists", "line": 5.5, "odds": -152, "avg": 5.1, "l10": 4.0, "proj": 4.4, "edge": -0.7, "direction": "UNDER", "actual": 12.0, "result": "LOSS"}, {"player_name": "Duncan Robinson", "team": "DET", "matchup": "DET vs NYK", "stat": "points", "line": 11.5, "odds": -132, "avg": 11.6, "l10": 9.4, "proj": 10.5, "edge": -0.7, "direction": "UNDER", "actual": 9.0, "result": "WIN"}, {"player_name": "Royce O'Neale", "team": "PHX", "matchup": "PHX @ HOU", "stat": "points", "line": 8.5, "odds": -128, "avg": 10.1, "l10": 9.0, "proj": 7.7, "edge": -0.7, "direction": "UNDER", "actual": 15.0, "result": "LOSS"}, {"player_name": "Brook Lopez", "team": "LAC", "matchup": "LAC vs GSW", "stat": "points", "line": 6.5, "odds": -114, "avg": 6.9, "l10": 8.0, "proj": 6.8, "edge": 0.7, "direction": "OVER", "actual": 0.0, "result": "VOID"}, {"player_name": "Royce O'Neale", "team": "PHX", "matchup": "PHX @ HOU", "stat": "rebounds", "line": 4.5, "odds": -154, "avg": 5.0, "l10": 4.1, "proj": 3.7, "edge": -0.7, "direction": "UNDER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Jaden Ivey", "team": "DET", "matchup": "DET vs NYK", "stat": "assists", "line": 1.5, "odds": 131, "avg": 1.8, "l10": 2.2, "proj": 2.1, "edge": -0.6, "direction": "UNDER", "actual": 1.0, "result": "WIN"}, {"player_name": "Scottie Barnes", "team": "TOR", "matchup": "TOR vs ATL", "stat": "points", "line": 19.5, "odds": -120, "avg": 19.1, "l10": 17.6, "proj": 18.8, "edge": -0.6, "direction": "UNDER", "actual": 18.0, "result": "WIN"}, {"player_name": "John Collins", "team": "LAC", "matchup": "LAC vs GSW", "stat": "points", "line": 13.5, "odds": -105, "avg": 12.6, "l10": 13.5, "proj": 13.8, "edge": -0.6, "direction": "UNDER", "actual": 18.0, "result": "LOSS"}, {"player_name": "Kevin Huerter", "team": "CHI", "matchup": "CHI @ BOS", "stat": "rebounds", "line": 3.5, "odds": 102, "avg": 3.8, "l10": 5.0, "proj": 3.9, "edge": -0.6, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "Quentin Grimes", "team": "PHI", "matchup": "PHI vs DEN", "stat": "rebounds", "line": 3.5, "odds": 115, "avg": 3.9, "l10": 4.1, "proj": 4.2, "edge": -0.6, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Isaac Okoro", "team": "CHI", "matchup": "CHI @ BOS", "stat": "assists", "line": 1.5, "odds": 124, "avg": 1.4, "l10": 1.1, "proj": 1.0, "edge": 0.5, "direction": "OVER", "actual": 1.0, "result": "LOSS"}, {"player_name": "Moses Moody", "team": "GSW", "matchup": "GSW @ LAC", "stat": "points", "line": 9.5, "odds": -120, "avg": 10.8, "l10": 8.7, "proj": 8.7, "edge": -0.5, "direction": "UNDER", "actual": 4.0, "result": "WIN"}, {"player_name": "Deni Avdija", "team": "POR", "matchup": "POR vs UTA", "stat": "points", "line": 28.5, "odds": -118, "avg": 25.7, "l10": 26.2, "proj": 28.9, "edge": 0.5, "direction": "OVER", "actual": 33.0, "result": "WIN"}, {"player_name": "Stephen Curry", "team": "GSW", "matchup": "GSW @ LAC", "stat": "assists", "line": 4.5, "odds": -135, "avg": 4.3, "l10": 4.8, "proj": 4.1, "edge": -0.4, "direction": "UNDER", "actual": 6.0, "result": "LOSS"}, {"player_name": "Javonte Green", "team": "DET", "matchup": "DET vs NYK", "stat": "points", "line": 6.5, "odds": 100, "avg": 6.9, "l10": 7.3, "proj": 7.1, "edge": -0.4, "direction": "UNDER", "actual": 17.0, "result": "LOSS"}, {"player_name": "Kyle Filipowski", "team": "UTA", "matchup": "UTA @ POR", "stat": "points", "line": 8.5, "odds": -109, "avg": 9.4, "l10": 9.6, "proj": 8.3, "edge": 0.4, "direction": "OVER", "actual": 13.0, "result": "WIN"}, {"player_name": "Ayo Dosunmu", "team": "CHI", "matchup": "CHI @ BOS", "stat": "points", "line": 12.5, "odds": -122, "avg": 14.0, "l10": 10.5, "proj": 11.8, "edge": -0.3, "direction": "UNDER", "actual": 15.0, "result": "LOSS"}, {"player_name": "Shai Gilgeous-Alexander", "team": "OKC", "matchup": "OKC vs CHA", "stat": "points", "line": 30.5, "odds": -114, "avg": 31.9, "l10": 30.4, "proj": 30.3, "edge": -0.3, "direction": "UNDER", "actual": 21.0, "result": "WIN"}, {"player_name": "Brandon Miller", "team": "CHA", "matchup": "CHA @ OKC", "stat": "points", "line": 17.5, "odds": -104, "avg": 19.7, "l10": 22.5, "proj": 18.1, "edge": -0.3, "direction": "UNDER", "actual": 28.0, "result": "LOSS"}, {"player_name": "Ajay Mitchell", "team": "OKC", "matchup": "OKC vs CHA", "stat": "rebounds", "line": 3.5, "odds": -147, "avg": 3.4, "l10": 3.8, "proj": 2.8, "edge": -0.3, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "Kyle Filipowski", "team": "UTA", "matchup": "UTA @ POR", "stat": "rebounds", "line": 5.5, "odds": -115, "avg": 6.1, "l10": 5.8, "proj": 5.5, "edge": -0.3, "direction": "UNDER", "actual": 5.0, "result": "WIN"}, {"player_name": "Miles Bridges", "team": "CHA", "matchup": "CHA @ OKC", "stat": "assists", "line": 2.5, "odds": 102, "avg": 3.6, "l10": 3.8, "proj": 2.9, "edge": -0.2, "direction": "UNDER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Kevin Durant", "team": "HOU", "matchup": "HOU vs PHX", "stat": "assists", "line": 4.5, "odds": -149, "avg": 4.6, "l10": 6.1, "proj": 5.4, "edge": 0.2, "direction": "OVER", "actual": 4.0, "result": "LOSS"}, {"player_name": "Amen Thompson", "team": "HOU", "matchup": "HOU vs PHX", "stat": "points", "line": 18.5, "odds": -123, "avg": 18.0, "l10": 19.2, "proj": 19.2, "edge": 0.2, "direction": "OVER", "actual": 17.0, "result": "LOSS"}, {"player_name": "Jared McCain", "team": "PHI", "matchup": "PHI vs DEN", "stat": "points", "line": 6.5, "odds": -105, "avg": 7.1, "l10": 6.5, "proj": 6.9, "edge": -0.2, "direction": "UNDER", "actual": 3.0, "result": "WIN"}, {"player_name": "Ausar Thompson", "team": "DET", "matchup": "DET vs NYK", "stat": "assists", "line": 2.5, "odds": 109, "avg": 2.6, "l10": 1.7, "proj": 2.0, "edge": 0.1, "direction": "OVER", "actual": 1.0, "result": "LOSS"}, {"player_name": "Reed Sheppard", "team": "HOU", "matchup": "HOU vs PHX", "stat": "assists", "line": 3.5, "odds": -106, "avg": 3.4, "l10": 3.9, "proj": 3.7, "edge": 0, "direction": "UNDER", "actual": 2.0, "result": "WIN"}, {"player_name": "Paul George", "team": "PHI", "matchup": "PHI vs DEN", "stat": "rebounds", "line": 5.5, "odds": -106, "avg": 5.5, "l10": 5.9, "proj": 5.7, "edge": 0, "direction": "UNDER", "actual": 2.0, "result": "WIN"}];
+    let filteredPicks = [...allPicks];
+    let currentSort = { column: 'edge', direction: 'desc' };
+    let filters = { stat: 'all', direction: 'all', tier: 'all', result: 'all', wagered: 'all', search: '' };
+    let wagers = {}; // Store wagers by pick key (player_stat_line)
+    let parlays = [{ legs: [], wager: 0 }]; // Array of parlays with legs and wager
+    let activeParlayIdx = 0; // Current parlay being edited
+
+    function init() {
+      setupEventListeners();
+      applyFilters();
+    }
+
+    function setupEventListeners() {
+      // Search
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        filters.search = e.target.value.toLowerCase();
+        applyFilters();
+      });
+
+      // Filter buttons
+      document.querySelectorAll('.filter-group').forEach(group => {
+        const filterType = group.dataset.filter;
+        group.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filters[filterType] = btn.dataset.value;
+            applyFilters();
+          });
+        });
+      });
+
+      // Column sorting
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const column = th.dataset.sort;
+          if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentSort.column = column;
+            currentSort.direction = column === 'edge' ? 'desc' : 'asc';
+          }
+          document.querySelectorAll('th').forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
+          th.classList.add('sorted-' + currentSort.direction);
+          applyFilters();
+        });
+      });
+
+      // Set initial sort indicator
+      document.querySelector('th[data-sort="edge"]').classList.add('sorted-desc');
+    }
+
+    function getTier(absEdge) {
+      if (absEdge >= 25) return 'caution';
+      if (absEdge >= 20) return 'good';
+      if (absEdge >= 15) return 'best';
+      if (absEdge >= 10) return 'okay';
+      return 'low';
+    }
+
+    function applyFilters() {
+      filteredPicks = allPicks.filter(p => {
+        if (filters.stat !== 'all' && p.stat !== filters.stat) return false;
+        if (filters.direction !== 'all' && p.direction !== filters.direction) return false;
+
+        const absEdge = Math.abs(p.edge);
+        const tier = getTier(absEdge);
+        if (filters.tier !== 'all' && tier !== filters.tier) return false;
+
+        if (filters.result !== 'all') {
+          const r = p.result || 'PENDING';
+          if (r !== filters.result) return false;
+        }
+
+        if (filters.search && !p.player_name.toLowerCase().includes(filters.search)) return false;
+
+        // Wagered filter
+        const pickKey = p.player_name + '_' + p.stat + '_' + p.line;
+        if (filters.wagered === 'yes' && !wagers[pickKey]) return false;
+
+        return true;
+      });
+
+      // Sort
+      filteredPicks.sort((a, b) => {
+        let aVal = a[currentSort.column];
+        let bVal = b[currentSort.column];
+
+        if (currentSort.column === 'edge') {
+          aVal = Math.abs(aVal || 0);
+          bVal = Math.abs(bVal || 0);
+        }
+
+        if (aVal === null || aVal === undefined) aVal = currentSort.direction === 'asc' ? Infinity : -Infinity;
+        if (bVal === null || bVal === undefined) bVal = currentSort.direction === 'asc' ? Infinity : -Infinity;
+
+        if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = (bVal || '').toLowerCase(); }
+
+        if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      renderTable();
+      updateStats();
+      updateWagerStats();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+
+      if (filteredPicks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="13" class="no-data">No picks match filters</td></tr>';
+        document.getElementById('count').textContent = '';
+        return;
+      }
+
+      tbody.innerHTML = filteredPicks.map(p => {
+        const absEdge = Math.abs(p.edge || 0);
+        // Tiers: 📉 <10 low | 🧊 10-15 okay | ⭐ 15-20 best | 🔥 20-25 good | ⚠️ 25+ caution
+        let edgeTier, edgeIcon;
+        if (absEdge >= 25) { edgeTier = 'caution'; edgeIcon = '⚠️'; }
+        else if (absEdge >= 20) { edgeTier = 'good'; edgeIcon = '🔥'; }
+        else if (absEdge >= 15) { edgeTier = 'best'; edgeIcon = '⭐'; }
+        else if (absEdge >= 10) { edgeTier = 'okay'; edgeIcon = '🧊'; }
+        else { edgeTier = 'low'; edgeIcon = '📉'; }
+
+        const resultClass = (p.result || 'pending').toLowerCase();
+        const actualClass = p.result === 'WIN' ? 'hit' : p.result === 'LOSS' ? 'miss' : '';
+        const statAbbr = { points: 'PTS', rebounds: 'REB', assists: 'AST' }[p.stat] || p.stat;
+
+        const oddsDisplay = p.odds ? (p.odds > 0 ? '+' + p.odds : p.odds) : '—';
+        const detailHidden = document.querySelector('.detail-col.hidden') ? 'hidden' : '';
+
+        return `
+          <tr>
+            <td><span class="player-name">${p.player_name}</span><span class="team">${p.team}</span></td>
+            <td>${statAbbr}</td>
+            <td>${p.line}</td>
+            <td>${oddsDisplay}</td>
+            <td><span class="edge ${edgeTier}" title="Market Edge">${edgeIcon} ${absEdge.toFixed(1)}%</span></td>
+            <td>
+              <span class="pill ${p.direction.toLowerCase()}">${p.direction}</span>
+              <button class="add-parlay${parlays[activeParlayIdx].legs.some(x => x.key === p.player_name + '_' + p.stat + '_' + p.line) ? ' in-parlay' : ''}" onclick="toggleParlay('${p.player_name}', '${p.stat}', ${p.line}, ${p.odds || -110}, '${p.direction}', '${p.result || ''}')" title="Add to parlay">+</button>
+            </td>
+            <td>${p.result === 'VOID' ? '<span style="color:#94a3b8">—</span>' : `<button class="wager-btn" data-key="${p.player_name}_${p.stat}_${p.line}" data-odds="${p.odds || -110}" data-result="${p.result || ''}" onclick="cycleWager(this)">${wagers[p.player_name + '_' + p.stat + '_' + p.line] || '—'}</button>`}</td>
+            <td class="actual ${actualClass}">${p.actual !== null ? p.actual : '—'}</td>
+            <td><span class="result ${resultClass}">${p.result || 'PENDING'}</span></td>
+            <td class="detail-col ${detailHidden}">${p.matchup || '—'}</td>
+            <td class="detail-col ${detailHidden}">${p.avg ?? '—'}</td>
+            <td class="detail-col ${detailHidden}">${p.l10 ?? '—'}</td>
+            <td class="detail-col ${detailHidden}">${p.proj ?? '—'}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('count').textContent = `Showing ${filteredPicks.length} of ${allPicks.length} picks`;
+    }
+
+    function updateStats() {
+      const wins = filteredPicks.filter(p => p.result === 'WIN').length;
+      const losses = filteredPicks.filter(p => p.result === 'LOSS').length;
+      const pending = filteredPicks.filter(p => !p.result).length;
+      const total = wins + losses;
+
+      document.getElementById('record').innerHTML =
+        `<span class="positive">${wins}</span>-<span class="negative">${losses}</span>`;
+
+      const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : '—';
+      const winRateEl = document.getElementById('winRate');
+      winRateEl.textContent = total > 0 ? winRate + '%' : '—';
+      winRateEl.className = 'stat-value ' + (parseFloat(winRate) >= 52.4 ? 'positive' : parseFloat(winRate) < 50 ? 'negative' : '');
+
+      document.getElementById('pending').textContent = pending;
+    }
+
+    const wagerUnits = ['—', '$5', '$10', '$25', '$50', '$100'];
+
+    function cycleWager(btn) {
+      const current = btn.textContent;
+      const idx = wagerUnits.indexOf(current);
+      const next = wagerUnits[(idx + 1) % wagerUnits.length];
+      btn.textContent = next;
+      btn.classList.toggle('active', next !== '—');
+
+      // Store wager by key
+      const key = btn.dataset.key;
+      if (next === '—') {
+        delete wagers[key];
+      } else {
+        wagers[key] = next;
+      }
+
+      updateWagerStats();
+    }
+
+    function calcProfit(wager, odds, result) {
+      if (result === 'WIN') {
+        // Positive odds: profit = wager * (odds / 100)
+        // Negative odds: profit = wager * (100 / abs(odds))
+        if (odds > 0) return wager * (odds / 100);
+        return wager * (100 / Math.abs(odds));
+      } else if (result === 'LOSS') {
+        return -wager;
+      }
+      return 0; // pending
+    }
+
+    function updateWagerStats() {
+      let totalWagered = 0;
+      let totalProfit = 0;
+
+      // Count individual pick wagers (only visible rows)
+      document.querySelectorAll('#tableBody tr .wager-btn').forEach(btn => {
+        const wagerText = btn.textContent;
+        if (wagerText === '—') return;
+
+        const wager = parseInt(wagerText.replace('$', ''));
+        const odds = parseInt(btn.dataset.odds) || -110;
+        const result = btn.dataset.result.toUpperCase();
+
+        if (result === 'WIN' || result === 'LOSS') {
+          totalWagered += wager;
+          totalProfit += calcProfit(wager, odds, result);
+        }
+      });
+
+      // Count parlay wagers
+      parlays.forEach(parlay => {
+        if (parlay.wager > 0 && parlay.legs.length > 0) {
+          const result = getParlayResult(parlay);
+          if (result === 'WIN') {
+            totalWagered += parlay.wager;
+            const decimalOdds = getParlayDecimalOdds(parlay);
+            totalProfit += parlay.wager * (decimalOdds - 1); // profit = wager * (decimal - 1)
+          } else if (result === 'LOSS') {
+            totalWagered += parlay.wager;
+            totalProfit -= parlay.wager;
+          }
+          // PENDING parlays don't count in ROI yet
+        }
+      });
+
+      document.getElementById('totalWagered').textContent = '$' + totalWagered;
+
+      const profitEl = document.getElementById('totalProfit');
+      profitEl.textContent = (totalProfit >= 0 ? '+$' : '-$') + Math.abs(totalProfit).toFixed(0);
+      profitEl.className = 'stat-value ' + (totalProfit > 0 ? 'positive' : totalProfit < 0 ? 'negative' : '');
+
+      const roiEl = document.getElementById('wagerRoi');
+      if (totalWagered > 0) {
+        const roi = (totalProfit / totalWagered * 100).toFixed(1);
+        roiEl.textContent = roi + '%';
+        roiEl.className = 'stat-value ' + (totalProfit > 0 ? 'positive' : totalProfit < 0 ? 'negative' : '');
+      } else {
+        roiEl.textContent = '—';
+        roiEl.className = 'stat-value';
+      }
+    }
+
+    function toggleParlay(player, stat, line, odds, direction, result) {
+      const key = player + '_' + stat + '_' + line;
+      const parlay = parlays[activeParlayIdx];
+      const idx = parlay.legs.findIndex(x => x.key === key);
+
+      if (idx >= 0) {
+        parlay.legs.splice(idx, 1);
+      } else {
+        parlay.legs.push({ key, player, stat, line, odds, direction, result });
+      }
+
+      updateParlayUI();
+      renderTable();
+    }
+
+    function removeFromParlay(key) {
+      const parlay = parlays[activeParlayIdx];
+      const idx = parlay.legs.findIndex(x => x.key === key);
+      if (idx >= 0) parlay.legs.splice(idx, 1);
+      updateParlayUI();
+      renderTable();
+    }
+
+    function clearParlay() {
+      parlays[activeParlayIdx] = { legs: [], wager: 0 };
+      updateParlayUI();
+      renderTable();
+    }
+
+    function addNewParlay() {
+      parlays.push({ legs: [], wager: 0 });
+      activeParlayIdx = parlays.length - 1;
+      updateParlayUI();
+      renderTable();
+    }
+
+    function switchParlay(idx) {
+      activeParlayIdx = idx;
+      updateParlayUI();
+      renderTable();
+    }
+
+    function deleteParlay(idx) {
+      if (parlays.length <= 1) {
+        parlays[0] = { legs: [], wager: 0 };
+      } else {
+        parlays.splice(idx, 1);
+        if (activeParlayIdx >= parlays.length) activeParlayIdx = parlays.length - 1;
+      }
+      updateParlayUI();
+      renderTable();
+    }
+
+    function setParlayWager(idx, amount) {
+      parlays[idx].wager = amount;
+      updateParlayUI();
+    }
+
+    function cycleParlayWager() {
+      const btn = document.getElementById('parlayWagerBtn');
+      const current = btn.textContent;
+      const idx = wagerUnits.indexOf(current);
+      const next = wagerUnits[(idx + 1) % wagerUnits.length];
+      btn.textContent = next;
+      btn.classList.toggle('active', next !== '—');
+
+      parlays[activeParlayIdx].wager = next === '—' ? 0 : parseInt(next.replace('$', ''));
+      updateParlayUI();
+    }
+
+    function getParlayResult(parlay) {
+      if (parlay.legs.length === 0) return 'EMPTY';
+      const results = parlay.legs.map(leg => leg.result?.toUpperCase());
+      if (results.some(r => !r || r === 'PENDING')) return 'PENDING';
+      if (results.some(r => r === 'LOSS')) return 'LOSS';
+      if (results.every(r => r === 'WIN')) return 'WIN';
+      return 'PENDING';
+    }
+
+    function getParlayDecimalOdds(parlay) {
+      let decimalOdds = 1;
+      parlay.legs.forEach(leg => {
+        if (leg.odds > 0) {
+          decimalOdds *= (leg.odds / 100) + 1;
+        } else {
+          decimalOdds *= (100 / Math.abs(leg.odds)) + 1;
+        }
+      });
+      return decimalOdds;
+    }
+
+    function updateParlayUI() {
+      const bar = document.getElementById('parlayBar');
+      const legsDiv = document.getElementById('parlayLegs');
+      const tabsDiv = document.getElementById('parlayTabs');
+      const parlay = parlays[activeParlayIdx];
+
+      // Check if any parlay has picks
+      const totalPicks = parlays.reduce((sum, p) => sum + p.legs.length, 0);
+      if (totalPicks === 0) {
+        bar.classList.remove('visible');
+        document.body.classList.remove('has-parlay');
+        return;
+      }
+
+      bar.classList.add('visible');
+      document.body.classList.add('has-parlay');
+
+      // Render tabs with result indicator
+      tabsDiv.innerHTML = parlays.map((p, i) => {
+        const active = i === activeParlayIdx ? ' active' : '';
+        const result = getParlayResult(p);
+        const resultIcon = result === 'WIN' ? '✓' : result === 'LOSS' ? '✗' : '';
+        const resultStyle = result === 'WIN' ? 'color:#059669;' : result === 'LOSS' ? 'color:#dc2626;' : '';
+        return `<button class="parlay-tab${active}" onclick="switchParlay(${i})">
+          <span style="${resultStyle}">${resultIcon} P${i + 1} (${p.legs.length})</span>
+          ${parlays.length > 1 ? `<span onclick="event.stopPropagation(); deleteParlay(${i})" style="margin-left: 4px; color: #94a3b8;">&times;</span>` : ''}
+        </button>`;
+      }).join('') + `<button class="parlay-tab add" onclick="addNewParlay()">+</button>`;
+
+      document.getElementById('parlayCount').textContent = parlay.legs.length;
+
+      // Parlay result status
+      const parlayResult = getParlayResult(parlay);
+      const resultBadge = parlayResult === 'WIN' ? '<span style="color:#059669;font-weight:600;">✓ WIN</span>'
+        : parlayResult === 'LOSS' ? '<span style="color:#dc2626;font-weight:600;">✗ LOSS</span>'
+        : parlayResult === 'PENDING' && parlay.legs.length > 0 ? '<span style="color:#3b82f6;">PENDING</span>'
+        : '';
+
+      legsDiv.innerHTML = parlay.legs.length === 0
+        ? '<div style="color: #94a3b8; font-size: 12px; padding: 8px 0;">No picks in this parlay</div>'
+        : parlay.legs.map(leg => {
+          const oddsStr = leg.odds > 0 ? '+' + leg.odds : leg.odds;
+          const statAbbr = { points: 'PTS', rebounds: 'REB', assists: 'AST' }[leg.stat] || leg.stat;
+          const legResult = (leg.result || '').toUpperCase();
+          const legStyle = legResult === 'WIN' ? 'color:#059669;' : legResult === 'LOSS' ? 'color:#dc2626;' : '';
+          const legIcon = legResult === 'WIN' ? '✓ ' : legResult === 'LOSS' ? '✗ ' : '';
+          return `<div class="parlay-leg" style="${legStyle}">
+            <span>${legIcon}${leg.player} <strong>${leg.direction}</strong> ${statAbbr} ${leg.line} <span style="color:#94a3b8">(${oddsStr})</span></span>
+            <span class="remove" onclick="removeFromParlay('${leg.key}')">&times;</span>
+          </div>`;
+        }).join('');
+
+      // Sync wager button with parlay state
+      const wagerBtn = document.getElementById('parlayWagerBtn');
+      if (wagerBtn) {
+        const wagerText = parlay.wager > 0 ? '$' + parlay.wager : '—';
+        wagerBtn.textContent = wagerText;
+        wagerBtn.classList.toggle('active', parlay.wager > 0);
+      }
+
+      // Calculate combined odds for active parlay
+      if (parlay.legs.length > 0) {
+        const decimalOdds = getParlayDecimalOdds(parlay);
+
+        let americanOdds;
+        if (decimalOdds >= 2) {
+          americanOdds = '+' + Math.round((decimalOdds - 1) * 100);
+        } else {
+          americanOdds = Math.round(-100 / (decimalOdds - 1));
+        }
+
+        const displayWager = parlay.wager > 0 ? parlay.wager : 10;
+        const payout = '$' + (displayWager * decimalOdds).toFixed(2);
+        document.getElementById('parlayOdds').textContent = americanOdds;
+        document.getElementById('parlayOddsSmall').textContent = americanOdds + ' ' + resultBadge;
+        document.getElementById('parlayPayout').textContent = payout;
+        document.getElementById('parlayPayoutSmall').textContent = payout;
+      } else {
+        document.getElementById('parlayOdds').textContent = '—';
+        document.getElementById('parlayOddsSmall').textContent = '—';
+        document.getElementById('parlayPayout').textContent = '—';
+        document.getElementById('parlayPayoutSmall').textContent = '—';
+      }
+
+      updateWagerStats();
+    }
+
+    function toggleParlayExpand() {
+      const details = document.getElementById('parlayDetails');
+      const arrow = document.getElementById('parlayExpand');
+      details.classList.toggle('expanded');
+      arrow.textContent = details.classList.contains('expanded') ? '▼' : '▲';
+    }
+
+    function toggleDetailCols() {
+      const cols = document.querySelectorAll('.detail-col');
+      const btn = document.getElementById('toggleDetails');
+      const isHidden = cols[0]?.classList.contains('hidden');
+
+      cols.forEach(col => {
+        if (isHidden) {
+          col.classList.remove('hidden');
+        } else {
+          col.classList.add('hidden');
+        }
+      });
+
+      btn.textContent = isHidden ? '− Details' : '+ Details';
+    }
+
+    init();
+  </script>
+</body>
+</html>
