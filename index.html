@@ -1,79 +1,343 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NBA Props - All Reports</title>
+  <title>PropsLab</title>
+  <style>
+    /*
+     * Design System - matches picks_*.html
+     */
+    :root {
+      --bg-primary: #0f1117;
+      --bg-secondary: #1a1d27;
+      --bg-tertiary: #242833;
+      --bg-hover: #2a2f3d;
+      --border: #2e3341;
+      --text-primary: #f1f3f5;
+      --text-secondary: #8b92a5;
+      --text-muted: #5c6370;
+      --accent: #6366f1;
+      --green: #22c55e;
+      --green-bg: rgba(34, 197, 94, 0.12);
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --blue-bg: rgba(59, 130, 246, 0.12);
+      --amber: #f59e0b;
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-hover: #e2e8f0;
+      --border: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --green: #16a34a;
+      --green-bg: rgba(22, 163, 74, 0.1);
+      --red: #dc2626;
+      --blue: #2563eb;
+      --blue-bg: rgba(37, 99, 235, 0.1);
+      --amber: #d97706;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .logo span { color: var(--accent); }
+
+    .theme-btn {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .theme-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .stat-value.positive { color: var(--green); }
+    .stat-value.negative { color: var(--red); }
+
+    /* Table */
+    .table-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: var(--bg-tertiary);
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th.center, td.center { text-align: center; }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+
+    .date-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .date-link:hover { color: var(--accent); }
+
+    .date-day {
+      font-size: 11px;
+      color: var(--text-muted);
+      width: 32px;
+    }
+
+    .tier-count {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .tier-count.strong {
+      background: var(--green-bg);
+      color: var(--green);
+    }
+
+    .tier-count.lean {
+      background: var(--blue-bg);
+      color: var(--blue);
+    }
+
+    .positive { color: var(--green); font-weight: 600; }
+    .negative { color: var(--red); font-weight: 600; }
+    .muted { color: var(--text-muted); }
+
+    .footer {
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 640px) {
+      .container { padding: 20px 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-value { font-size: 22px; }
+      th, td { padding: 12px 10px; }
+    }
+  </style>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; max-width: 700px; margin: 0 auto; padding: 40px 20px; background: #ffffff; color: #1a1a1a; line-height: 1.5;">
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo">Props<span>Lab</span></div>
+      <button class="theme-btn" onclick="toggleTheme()">☀</button>
+    </header>
 
-  <div style="margin-bottom: 32px;">
-    <h1 style="margin: 0; font-size: 24px; font-weight: 600; color: #1a1a1a;">NBA Player Props</h1>
-    <p style="margin: 6px 0 0 0; color: #6b7280; font-size: 14px;">All Reports</p>
-  </div>
-
-  <!-- Overall Stats -->
-  <div style="margin-bottom: 24px; padding: 16px; background: #f9fafb; border-radius: 8px;">
-    <div style="display: flex; gap: 24px; font-size: 14px;">
-      <div>
-        <span style="color: #6b7280;">Overall:</span>
-        <span style="font-weight: 600; margin-left: 4px;">0-0</span>
-        <span style="color: #6b7280; margin-left: 4px;">(0.0%)</span>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Record</div>
+        <div class="stat-value">934-745</div>
       </div>
-      <div>
-        <span style="color: #6b7280;">Pending:</span>
-        <span style="margin-left: 4px;">282</span>
+      <div class="stat-card">
+        <div class="stat-label">Win Rate</div>
+        <div class="stat-value positive">55.6%</div>
       </div>
-      <div>
-        <span style="color: #6b7280;">Days:</span>
-        <span style="margin-left: 4px;">2</span>
+      <div class="stat-card">
+        <div class="stat-label">Strong</div>
+        <div class="stat-value">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Lean</div>
+        <div class="stat-value">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">9</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Days</div>
+        <div class="stat-value">3</div>
       </div>
     </div>
-  </div>
 
-  <!-- Reports Table -->
-  <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-    <thead>
-      <tr style="border-bottom: 2px solid #e5e5e5;">
-        <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #374151;">Date</th>
-        <th style="padding: 12px 16px; text-align: center; font-weight: 600; color: #374151;">Picks</th>
-        <th style="padding: 12px 16px; text-align: center; font-weight: 600; color: #374151;">Record</th>
-        <th style="padding: 12px 16px; text-align: center; font-weight: 600; color: #374151;">Win%</th>
-        <th style="padding: 12px 16px; text-align: center; font-weight: 600; color: #374151;">Pending</th>
-      </tr>
-    </thead>
-    <tbody>
-      
-        <tr style="border-bottom: 1px solid #f0f0f0;">
-          <td style="padding: 12px 16px;">
-            <a href="props_2026-01-13.html" style="color: #1a1a1a; text-decoration: none; font-weight: 500;">
-              Tue Jan 13, 2026
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th class="center">Picks</th>
+            <th class="center">Strong</th>
+            <th class="center">Lean</th>
+            <th class="center">Record</th>
+            <th class="center">Win%</th>
+            <th class="center">Pend</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        <tr>
+          <td>
+            <a href="picks_2026-01-14.html" class="date-link">
+              <span class="date-day">Wed</span>
+              <span class="date-full">Jan 14</span>
             </a>
           </td>
-          <td style="padding: 12px 16px; text-align: center; color: #6b7280;">282</td>
-          <td style="padding: 12px 16px; text-align: center;">—</td>
-          <td style="padding: 12px 16px; text-align: center; color: #9ca3af;">—</td>
-          <td style="padding: 12px 16px; text-align: center; color: #9ca3af;">282p</td>
+          <td class="center">9</td>
+          <td class="center"><span class="tier-count strong">0</span></td>
+          <td class="center"><span class="tier-count lean">0</span></td>
+          <td class="center">—</td>
+          <td class="center muted">0%</td>
+          <td class="center muted">9</td>
         </tr>
         
-        <tr style="border-bottom: 1px solid #f0f0f0;">
-          <td style="padding: 12px 16px;">
-            <a href="props_2026-01-12.html" style="color: #1a1a1a; text-decoration: none; font-weight: 500;">
-              Mon Jan 12, 2026
+        <tr>
+          <td>
+            <a href="picks_2026-01-13.html" class="date-link">
+              <span class="date-day">Tue</span>
+              <span class="date-full">Jan 13</span>
             </a>
           </td>
-          <td style="padding: 12px 16px; text-align: center; color: #6b7280;">133</td>
-          <td style="padding: 12px 16px; text-align: center;">—</td>
-          <td style="padding: 12px 16px; text-align: center; color: #9ca3af;">—</td>
-          <td style="padding: 12px 16px; text-align: center; color: #9ca3af;"></td>
+          <td class="center">17</td>
+          <td class="center"><span class="tier-count strong">0</span></td>
+          <td class="center"><span class="tier-count lean">0</span></td>
+          <td class="center">6-11</td>
+          <td class="center negative">35%</td>
+          <td class="center muted">—</td>
         </tr>
         
-    </tbody>
-  </table>
+        <tr>
+          <td>
+            <a href="picks_2026-01-10.html" class="date-link">
+              <span class="date-day">Sat</span>
+              <span class="date-full">Jan 10</span>
+            </a>
+          </td>
+          <td class="center">14</td>
+          <td class="center"><span class="tier-count strong">0</span></td>
+          <td class="center"><span class="tier-count lean">0</span></td>
+          <td class="center">9-4</td>
+          <td class="center positive">69%</td>
+          <td class="center muted">—</td>
+        </tr>
+        
+        </tbody>
+      </table>
+    </div>
 
-  <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e5e5e5; color: #9ca3af; font-size: 11px;">
-    <p style="margin: 0;">Generated 2026-01-13 18:54</p>
+    <footer class="footer">
+      Generated 2026-01-14 19:09 · Model v2.2
+    </footer>
   </div>
 
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.querySelector('.theme-btn');
+      if (html.getAttribute('data-theme') === 'light') {
+        html.removeAttribute('data-theme');
+        btn.textContent = '☀';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        html.setAttribute('data-theme', 'light');
+        btn.textContent = '🌙';
+        localStorage.setItem('theme', 'light');
+      }
+    }
+
+    // Load saved theme
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.querySelector('.theme-btn').textContent = '🌙';
+    }
+  </script>
 </body>
 </html>
